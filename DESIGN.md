@@ -16,7 +16,7 @@ One sentence that captures the feeling the tracker should leave you with.
 
 Two or three references that capture the vibe (links to dribbble shots, screenshots of apps you admire, Pinterest boards — anything visual):
 
-- `<TODO>`
+- `<TODO >`
 - `<TODO>`
 - `<TODO>`
 
