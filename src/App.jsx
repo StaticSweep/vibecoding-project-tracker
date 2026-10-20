@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { ListFilter, Plus } from 'lucide-react';
+import { ListFilter, Plus, TriangleAlert } from 'lucide-react';
 import { STORAGE_KEYS, TEAM, TYPES } from './lib/constants.js';
 import { TYPE_STYLES } from './lib/types.js';
-import { todayISO } from './lib/dates.js';
+import { getDueState, todayISO } from './lib/dates.js';
 import { buildSeedTasks, createId, isKnownAssignee, normaliseTasks } from './lib/tasks.js';
 import { buttonPrimary, focusRing } from './lib/ui.js';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
@@ -25,8 +25,7 @@ import SegmentedControl from './components/SegmentedControl.jsx';
  *                             Toast, ErrorBoundary
  *
  * Milestones still to build — search for `TODO M<n>`:
- *   M8 due-tint · M9 context
- *   M10 copy-prompt · M11 anchors · M12 secret-sauce · M13 pitch-ready
+ *   M9 context · M10 copy-prompt · M11 anchors · M12 secret-sauce · M13 pitch-ready
  */
 
 // The starter exported these from App.jsx; keep the exports for compatibility.
@@ -45,7 +44,7 @@ export default function App() {
 
 function Tracker() {
   const toast = useToast();
-  const today = todayISO();
+  const today = useToday();
 
   const writeErrorShown = useRef(false);
   const [tasks, setTasks, tasksNotice] = useLocalStorage(
@@ -189,6 +188,9 @@ function Tracker() {
     else addButtonRef.current?.focus();
   }
 
+  // FR-M8-08: overdue count for the header.
+  const overdueCount = tasks.filter((t) => getDueState(t, today) === 'overdue').length;
+
   // TODO M11 anchors:
   //   const [anchors, setAnchors] = useLocalStorage(STORAGE_KEYS.anchors, DEFAULT_ANCHORS, …);
 
@@ -203,6 +205,12 @@ function Tracker() {
         </div>
 
         <div className="flex items-center gap-4">
+          {overdueCount > 0 && (
+            <p className="inline-flex h-8 items-center gap-1.5 rounded-full bg-due-overdue-bg px-3 text-sm font-semibold text-due-overdue-fg">
+              <TriangleAlert aria-hidden="true" className="h-4 w-4" />
+              {overdueCount} overdue
+            </p>
+          )}
           {/* Owner filter (FR-M7-08) */}
           <div className="flex items-center gap-2">
             <label htmlFor="owner-filter" className="text-sm font-semibold text-ink">
@@ -291,4 +299,28 @@ function Tracker() {
       )}
     </div>
   );
+}
+
+/**
+ * Today's local date, kept current (FR-M8-06): re-checked when the window
+ * gets focus or becomes visible, and once a minute, so a board left open
+ * overnight updates its due tints.
+ */
+function useToday() {
+  const [today, setToday] = useState(todayISO);
+
+  useEffect(() => {
+    const refresh = () => setToday(todayISO()); // same string → no re-render
+    const onVisible = () => document.visibilityState === 'visible' && refresh();
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVisible);
+    const timer = window.setInterval(refresh, 60_000);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  return today;
 }

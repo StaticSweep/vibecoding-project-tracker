@@ -214,10 +214,10 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 ```
 ┌─┬──────────────────────────────────────────┐
-│▌│ [FEATURE]                     [⧉ copy]   │  ← type badge · copy icon button (M10)
+│▌│ [FEATURE]                 ⏰ Due tomorrow │  ← type badge · due label (M6, M8)
 │▌│ Card title, maximum two lines, then …    │  ← card title
-│▌│ (AB) Alex B.              ⏰ Due tomorrow │  ← avatar + name · due label (M7, M8)
-│▌│ ✦ Claude              [Stage ▾] [←] [→]  │  ← context indicator (M9) · move controls
+│▌│ (AB) Alex B. ▾            ✦ Claude [⧉]   │  ← avatar + Hand off to… · context (M9) · copy (M10)
+│▌│ [Stage ▾]                       [←] [→]  │  ← move controls
 └─┴──────────────────────────────────────────┘
  ↑ 4 px type stripe (type-feature or type-bug)
    card background = due tint (§2.3)

@@ -285,14 +285,14 @@ Due state is computed from date-only values in the user's **local** timezone, co
 
 > **Decision (agreed):** DESIGN.md §2 leaves a gap between "less than 24 hours" and "more than 2 days". Because `dueDate` has no time component, "tomorrow" counts as *Warning*. Update DESIGN.md §2 to match.
 
-- [ ] **FR-M8-01** · Must — Card background or border is tinted according to the table above.
-- [ ] **FR-M8-02** · Must — Every tinted state also shows a text label and icon (e.g. clock / alert), so the state is readable without colour.
-- [ ] **FR-M8-03** · Must — Date comparisons use local dates. Do **not** compare `new Date('YYYY-MM-DD')` (parsed as UTC) to the local current time — compare `YYYY-MM-DD` strings or build local `Date` objects.
+- [x] **FR-M8-01** · Must — Card background or border is tinted according to the table above.
+- [x] **FR-M8-02** · Must — Every tinted state also shows a text label and icon (e.g. clock / alert), so the state is readable without colour.
+- [x] **FR-M8-03** · Must — Date comparisons use local dates. Do **not** compare `new Date('YYYY-MM-DD')` (parsed as UTC) to the local current time — compare `YYYY-MM-DD` strings or build local `Date` objects.
 - [x] **FR-M8-04** · Must — The due date uses the native date input and can be cleared back to `null`.
-- [ ] **FR-M8-05** · Must — Due tint and type stripe coexist legibly: tint applies to background/border, type stays on the accent stripe and badge.
-- [ ] **FR-M8-06** · Should — Due states are recomputed on every render and on window focus, so a board left open overnight updates.
+- [x] **FR-M8-05** · Must — Due tint and type stripe coexist legibly: tint applies to background/border, type stays on the accent stripe and badge.
+- [x] **FR-M8-06** · Should — Due states are recomputed on every render and on window focus, so a board left open overnight updates.
 - [x] **FR-M8-07** · Should — Picking a past due date when creating a task shows a soft inline warning ("That date has already passed") but still allows saving.
-- [ ] **FR-M8-08** · Could — The header shows an overdue count, e.g. "2 overdue".
+- [x] **FR-M8-08** · Could — The header shows an overdue count, e.g. "2 overdue".
 
 #### M9 `context` — Curated Context field
 

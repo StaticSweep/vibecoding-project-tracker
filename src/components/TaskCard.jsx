@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { STAGES, TEAM } from '../lib/constants.js';
-import { formatDueLabel, formatLongDate } from '../lib/dates.js';
+import { formatDueLabel, formatLongDate, getDueState } from '../lib/dates.js';
+import { DUE_STYLES } from '../lib/due.js';
 import { isKnownAssignee } from '../lib/tasks.js';
 import { TYPE_STYLES } from '../lib/types.js';
 import { focusRing, iconButton } from '../lib/ui.js';
@@ -11,7 +12,7 @@ import Avatar from './Avatar.jsx';
  * One task on the board (DESIGN.md §4.3 / §4.4).
  *
  * M4 shows the data as plain text. Later milestones add:
- *   M8 due tint · M9 context indicator · M10 copy button
+ *   M9 context indicator · M10 copy button
  */
 export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
   const stageIndex = STAGES.findIndex((s) => s.id === task.status);
@@ -21,6 +22,8 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
   const stripe = (TYPE_STYLES[task.type] ?? TYPE_STYLES.feature).stripe;
   const known = isKnownAssignee(task.assignee);
   const dueLabel = formatDueLabel(task, today);
+  const due = DUE_STYLES[getDueState(task, today)];
+  const DueIcon = due.icon;
   const titleId = `task-title-${task.id}`;
   const stageSelectId = `task-stage-${task.id}`;
   const ownerSelectId = `task-owner-${task.id}`;
@@ -31,11 +34,23 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
         data-task-id={task.id}
         tabIndex={-1}
         aria-labelledby={titleId}
-        className={`relative rounded-lg border border-line-subtle bg-surface-card py-3 pl-4 pr-3 transition-shadow duration-150 hover:shadow-sm focus-within:shadow-sm motion-reduce:transition-none ${focusRing}`}
+        className={`relative rounded-lg border border-line-subtle ${due.card} py-3 pl-4 pr-3 transition-shadow duration-150 hover:shadow-sm focus-within:shadow-sm motion-reduce:transition-none ${focusRing}`}
       >
         {/* Type stripe (FR-M6-01, DESIGN.md §2.2) — decoration; the badge carries the text. */}
         <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1 rounded-l-[7px] ${stripe}`} />
-        <TypeBadge type={task.type} />
+        <div className="flex items-center justify-between gap-2">
+          <TypeBadge type={task.type} />
+          {/* Due label: colour + icon + text, never colour alone (FR-M8-02) */}
+          {dueLabel && (
+            <span
+              className={`flex shrink-0 items-center gap-1 text-[13px] font-semibold leading-[18px] ${due.label}`}
+              title={task.dueDate ? formatLongDate(task.dueDate) : undefined}
+            >
+              {DueIcon && <DueIcon aria-hidden="true" className="h-3.5 w-3.5" />}
+              {dueLabel}
+            </span>
+          )}
+        </div>
 
         {/*
           The title button covers the whole card (::after), so a click anywhere
@@ -53,7 +68,6 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
           </button>
         </h3>
 
-        {/* TODO M8 due-tint: tint + icon. */}
         <div className="mt-2 flex items-center justify-between gap-2 text-sm text-ink-muted">
           {/*
             Owner + "Hand off to…" (FR-M7-01/02). The select shows the owner's
@@ -70,7 +84,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
               value={task.assignee}
               onChange={(e) => onHandOff(task.id, e.target.value)}
               title="Hand off to…"
-              className={`h-7 min-w-0 max-w-[9rem] truncate rounded-md border border-transparent bg-transparent pl-1 pr-6 text-sm text-ink hover:border-line-strong hover:bg-surface-card ${focusRing}`}
+              className={`h-7 min-w-0 max-w-full truncate rounded-md border border-transparent bg-transparent pl-1 pr-6 text-sm text-ink hover:border-line-strong hover:bg-surface-card ${focusRing}`}
             >
               {!known && (
                 <option value={task.assignee}>
@@ -84,14 +98,6 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
               ))}
             </select>
           </div>
-          {dueLabel && (
-            <span
-              className="shrink-0"
-              title={task.dueDate ? formatLongDate(task.dueDate) : undefined}
-            >
-              {dueLabel}
-            </span>
-          )}
         </div>
 
         {/* Move controls (FR-M4-07, DESIGN.md §4.5) — no drag-and-drop. */}
