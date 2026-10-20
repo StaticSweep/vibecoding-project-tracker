@@ -4,6 +4,8 @@ import { STORAGE_KEYS, TEAM, TYPES } from './lib/constants.js';
 import { TYPE_STYLES } from './lib/types.js';
 import { getDueState, todayISO } from './lib/dates.js';
 import { buildSeedTasks, createId, isKnownAssignee, normaliseTasks } from './lib/tasks.js';
+import { nextContextUpdatedAt } from './lib/context.js';
+import { migrateTasks, readSchemaVersion, writeSchemaVersion } from './lib/schema.js';
 import { buttonPrimary, focusRing } from './lib/ui.js';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
@@ -52,7 +54,8 @@ function Tracker() {
     () => buildSeedTasks(todayISO()),
     {
       normalise: (raw) => {
-        const result = normaliseTasks(raw, todayISO());
+        // DR-MIG-02: migrate older data first, then normalise.
+        const result = normaliseTasks(migrateTasks(raw, readSchemaVersion()), todayISO());
         return { ok: result.ok, value: result.tasks, dropped: result.dropped };
       },
       fallback: [],
@@ -67,6 +70,9 @@ function Tracker() {
       },
     },
   );
+
+  // DR-MIG-01: record the schema version once the data is loaded and migrated.
+  useEffect(writeSchemaVersion, []);
 
   // DR-INT-01: tell the user once if saved data had to be repaired.
   const noticeShown = useRef(false);
@@ -153,16 +159,20 @@ function Tracker() {
           id: createId(),
           ...fields,
           createdDate: todayISO(),
-          context: '',
-          contextTool: null,
-          contextUpdatedAt: null,
+          contextUpdatedAt: nextContextUpdatedAt(null, fields),
         },
       ]);
       // Do not hide the new task behind an active filter.
       if (typeFilter !== 'all' && typeFilter !== fields.type) setTypeFilter('all');
       if (ownerFilter !== 'all' && ownerFilter !== fields.assignee) setOwnerFilter('all');
     } else {
-      setTasks((list) => list.map((t) => (t.id === editor.id ? { ...t, ...fields } : t)));
+      setTasks((list) =>
+        list.map((t) =>
+          t.id === editor.id
+            ? { ...t, ...fields, contextUpdatedAt: nextContextUpdatedAt(t, fields) }
+            : t,
+        ),
+      );
       if (editingTask && editingTask.assignee !== fields.assignee && isKnownAssignee(fields.assignee)) {
         announceHandOff(editor.id, editingTask.assignee, fields.assignee);
       }

@@ -1,10 +1,12 @@
-import { useId, useMemo, useRef, useState } from 'react';
-import { Clock, Trash2, X } from 'lucide-react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Clock, FilePlus2, Trash2, TriangleAlert, X } from 'lucide-react';
 import Modal from './Modal.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
 import { TYPE_STYLES } from '../lib/types.js';
-import { DESCRIPTION_MAX, STAGES, TEAM, TITLE_MAX, TYPES } from '../lib/constants.js';
+import { CONTEXT_TOOLS, DESCRIPTION_MAX, STAGES, TEAM, TITLE_MAX, TYPES } from '../lib/constants.js';
+import { CONTEXT_TEMPLATE, CONTEXT_WARN_LENGTH } from '../lib/context.js';
+import { formatLongDateTime, formatTimeAgo } from '../lib/dates.js';
 import { isKnownAssignee } from '../lib/tasks.js';
 import {
   buttonDestructive,
@@ -20,7 +22,7 @@ import {
 const COUNTER_FROM = 0.8;
 
 /**
- * Add / edit task modal (M5 crud-modal).
+ * Add / edit task modal (M5 crud-modal, M9 context).
  *
  * Props:
  *   mode       'create' | 'edit'
@@ -45,6 +47,10 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
     assignee: useId(),
     due: useId(),
     dueHint: useId(),
+    context: useId(),
+    contextHelp: useId(),
+    contextWarn: useId(),
+    tool: useId(),
   };
 
   const initial = useMemo(
@@ -57,6 +63,8 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
             status: task.status,
             assignee: task.assignee,
             dueDate: task.dueDate ?? '',
+            context: task.context ?? '',
+            contextTool: task.contextTool ?? '',
           }
         : {
             title: '',
@@ -65,6 +73,8 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
             status: defaults.status,
             assignee: defaults.assignee,
             dueDate: '',
+            context: '',
+            contextTool: '',
           },
     // The snapshot is taken once, when the modal opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,6 +85,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
   const [titleError, setTitleError] = useState('');
   const [confirm, setConfirm] = useState(null); // null | 'discard' | 'delete'
   const titleRef = useRef(null);
+  const contextRef = useRef(null);
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(initial);
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -99,8 +110,27 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
       status: form.status,
       assignee: form.assignee,
       dueDate: form.dueDate || null, // DR: empty input → null, never ''
+      context: form.context, // stored verbatim (FR-M9-08)
+      contextTool: form.contextTool || null,
     });
   }
+
+  // FR-M9-09: fill an empty Context field with the template headings.
+  // The button disappears once the field is filled, so focus moves to the
+  // textarea right after that render (not via the removed button).
+  const [focusContext, setFocusContext] = useState(false);
+  function insertTemplate() {
+    setForm((f) => ({ ...f, context: CONTEXT_TEMPLATE }));
+    setFocusContext(true);
+  }
+  useEffect(() => {
+    if (!focusContext) return;
+    setFocusContext(false);
+    const el = contextRef.current;
+    const caret = CONTEXT_TEMPLATE.indexOf('\n') + 1; // start of the line after "## Goal"
+    el?.focus();
+    el?.setSelectionRange(caret, caret);
+  }, [focusContext]);
 
   // Ctrl/Cmd + Enter submits from anywhere in the form, including textareas (FR-M5-16).
   function handleFormKeyDown(e) {
@@ -268,7 +298,73 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
               )}
             </div>
 
-            {/* TODO M9 context: Context textarea + Tool select. */}
+            {/* Context (M9) — the curated briefing for the next teammate or AI tool */}
+            <div className="space-y-3 border-t border-line-subtle pt-5">
+              <div>
+                <div className="flex items-end justify-between gap-2">
+                  <label htmlFor={ids.context} className={labelBase}>
+                    Context
+                  </label>
+                  {form.context === '' && (
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={insertTemplate}
+                      className={buttonSecondary}
+                    >
+                      <FilePlus2 aria-hidden="true" className="h-4 w-4" />
+                      Insert template
+                    </button>
+                  )}
+                </div>
+                <p id={ids.contextHelp} className={`mt-1 ${helperText}`}>
+                  Write what the next person or AI tool must know. Do not put passwords or API keys here.
+                </p>
+                <textarea
+                  ref={contextRef}
+                  id={ids.context}
+                  value={form.context}
+                  onChange={set('context')}
+                  rows={8}
+                  spellCheck={false}
+                  placeholder={'Goal, what already works, limits, files, the last prompt, the next step.'}
+                  aria-describedby={[ids.contextHelp, form.context.length > CONTEXT_WARN_LENGTH && ids.contextWarn].filter(Boolean).join(' ')}
+                  className={`${inputBase} mt-2 min-h-[9rem] resize-y whitespace-pre-wrap py-2 font-mono text-sm leading-[22px]`}
+                />
+                {form.context.length > CONTEXT_WARN_LENGTH && (
+                  <p id={ids.contextWarn} className="mt-1 flex items-center gap-1 text-[13px] leading-[18px] text-due-warning-fg">
+                    <TriangleAlert aria-hidden="true" className="h-3.5 w-3.5" />
+                    This context is very long. The browser can keep approximately 5 MB of data.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <label htmlFor={ids.tool} className={labelBase}>
+                    Tool
+                  </label>
+                  <select
+                    id={ids.tool}
+                    value={form.contextTool}
+                    onChange={set('contextTool')}
+                    className={`${inputBase} mt-1 h-10 w-48`}
+                  >
+                    <option value="">No tool</option>
+                    {CONTEXT_TOOLS.map((tool) => (
+                      <option key={tool} value={tool}>
+                        {tool}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {isEdit && task.contextUpdatedAt && (
+                  <p className={helperText} title={formatLongDateTime(task.contextUpdatedAt)}>
+                    Updated {formatTimeAgo(task.contextUpdatedAt)}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Action bar — stays visible (FR-M5-12, DESIGN.md §4.8) */}

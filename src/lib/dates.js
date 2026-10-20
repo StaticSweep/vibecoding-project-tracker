@@ -85,3 +85,25 @@ export function formatLongDate(iso) {
     year: 'numeric',
   });
 }
+
+/**
+ * Short relative time for an ISO timestamp, e.g. "just now", "5 min ago",
+ * "2 h ago", "3 days ago" (FR-M9-05, DESIGN.md §5 "Updated {time} ago").
+ */
+export function formatTimeAgo(isoTimestamp, now = Date.now()) {
+  const minutes = Math.floor((now - Date.parse(isoTimestamp)) / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+}
+
+/** Long, absolute date and time for tooltips. */
+export function formatLongDateTime(isoTimestamp) {
+  return new Date(isoTimestamp).toLocaleString(undefined, {
+    dateStyle: 'long',
+    timeStyle: 'short',
+  });
+}

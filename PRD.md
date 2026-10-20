@@ -296,18 +296,18 @@ Due state is computed from date-only values in the user's **local** timezone, co
 
 #### M9 `context` — Curated Context field
 
-- [ ] **FR-M9-01** · Must — The modal includes a multi-line **Context** textarea in the monospace font (DESIGN.md §3), at least 6 rows tall and vertically resizable.
-- [ ] **FR-M9-02** · Must — Placeholder or helper text teaches what good context looks like: goal, what already works, constraints, relevant files, last prompt used, next step.
-- [ ] **FR-M9-03** · Must — A **Tool** select offers `Claude`, `ChatGPT`, `Cursor`, `Lovable`, `Replit`, `Other`, plus an empty option (stored as `null`).
-- [ ] **FR-M9-04** · Must — `contextUpdatedAt` is set automatically to an ISO timestamp on save **only** when `context` or `contextTool` actually changed.
-- [ ] **FR-M9-05** · Must — The modal shows when context was last updated in relative form ("Updated 2 h ago"), with the absolute date/time in a tooltip.
-- [ ] **FR-M9-06** · Must — Cards with non-empty context show an indicator (icon + tool name) so teammates can spot tasks that are ready to resume.
-- [ ] **FR-M9-07** · Must — Tasks saved before M9 (missing `context`, `contextTool`, `contextUpdatedAt`) load with defaults `''`, `null`, `null` and no errors.
-- [ ] **FR-M9-08** · Must — Context is stored and displayed exactly as typed or pasted — whitespace, line breaks and Markdown are preserved; nothing is truncated.
-- [ ] **FR-M9-09** · Should — An "Insert template" button fills an empty Context field with headings (Goal / Done so far / Constraints / Files / Last prompt / Next step).
-- [ ] **FR-M9-10** · Should — Helper text reminds users not to paste API keys or passwords (data lives unencrypted in the browser).
-- [ ] **FR-M9-11** · Should — A soft warning appears if a single context exceeds 20,000 characters (localStorage is capped at roughly 5 MB per site).
-- [ ] **FR-M9-12** · Could — A "stale context" hint appears on cards that are not done and whose context is older than 3 days.
+- [x] **FR-M9-01** · Must — The modal includes a multi-line **Context** textarea in the monospace font (DESIGN.md §3), at least 6 rows tall and vertically resizable.
+- [x] **FR-M9-02** · Must — Placeholder or helper text teaches what good context looks like: goal, what already works, constraints, relevant files, last prompt used, next step.
+- [x] **FR-M9-03** · Must — A **Tool** select offers `Claude`, `ChatGPT`, `Cursor`, `Lovable`, `Replit`, `Other`, plus an empty option (stored as `null`).
+- [x] **FR-M9-04** · Must — `contextUpdatedAt` is set automatically to an ISO timestamp on save **only** when `context` or `contextTool` actually changed.
+- [x] **FR-M9-05** · Must — The modal shows when context was last updated in relative form ("Updated 2 h ago"), with the absolute date/time in a tooltip.
+- [x] **FR-M9-06** · Must — Cards with non-empty context show an indicator (icon + tool name) so teammates can spot tasks that are ready to resume.
+- [x] **FR-M9-07** · Must — Tasks saved before M9 (missing `context`, `contextTool`, `contextUpdatedAt`) load with defaults `''`, `null`, `null` and no errors.
+- [x] **FR-M9-08** · Must — Context is stored and displayed exactly as typed or pasted — whitespace, line breaks and Markdown are preserved; nothing is truncated.
+- [x] **FR-M9-09** · Should — An "Insert template" button fills an empty Context field with headings (Goal / Done so far / Constraints / Files / Last prompt / Next step).
+- [x] **FR-M9-10** · Should — Helper text reminds users not to paste API keys or passwords (data lives unencrypted in the browser).
+- [x] **FR-M9-11** · Should — A soft warning appears if a single context exceeds 20,000 characters (localStorage is capped at roughly 5 MB per site).
+- [x] **FR-M9-12** · Could — A "stale context" hint appears on cards that are not done and whose context is older than 3 days.
 
 #### M10 `copy-prompt` — "Copy as Prompt Context"
 
@@ -456,7 +456,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 - [ ] **NFR-SEC-01** · Must — User content is rendered as text through React's default escaping; no `dangerouslySetInnerHTML`. If Markdown rendering is ever added to the Context field, its output must be sanitised.
 - [ ] **NFR-SEC-02** · Must — Anchor URLs are restricted to `http`/`https` (FR-M11-05); all external links use `rel="noopener noreferrer"`.
 - [ ] **NFR-SEC-03** · Must — No data leaves the browser: no analytics, tracking or third-party calls (web-font CDNs excepted). No secrets committed to the repo.
-- [ ] **NFR-SEC-04** · Should — Users are told that data lives unencrypted in this browser only (FR-M9-10, plus a footer note).
+- [x] **NFR-SEC-04** · Should — Users are told that data lives unencrypted in this browser only (FR-M9-10, plus a footer note).
 
 #### Compatibility
 
@@ -577,9 +577,9 @@ The following are calculated from stored fields on every render and must **not**
 
 #### 14.4.7 Schema versioning & migration
 
-- [ ] **DR-MIG-01** · Should — `vibetracker.meta.schemaVersion` records the data version. **v0** = tasks without context fields (pre-M9); **v1** = full §5 model.
-- [ ] **DR-MIG-02** · Must — On load, a single `migrate(data, fromVersion)` step upgrades older data before normalisation. Missing `meta` is treated as v0.
-- [ ] **DR-MIG-03** · Must — Migrations are additive only (new fields with defaults) and idempotent; they never delete user content.
+- [x] **DR-MIG-01** · Should — `vibetracker.meta.schemaVersion` records the data version. **v0** = tasks without context fields (pre-M9); **v1** = full §5 model.
+- [x] **DR-MIG-02** · Must — On load, a single `migrate(data, fromVersion)` step upgrades older data before normalisation. Missing `meta` is treated as v0.
+- [x] **DR-MIG-03** · Must — Migrations are additive only (new fields with defaults) and idempotent; they never delete user content.
 - [ ] **DR-MIG-04** · Should — Data with a `schemaVersion` **newer** than the running app is not overwritten; the app shows a read-only notice ("This board was saved by a newer version").
 
 #### 14.4.8 Seed & demo data
@@ -619,9 +619,9 @@ Applies to FR-DATA-04 / FR-DATA-05.
 #### 14.4.11 Privacy & retention
 
 - [ ] **DR-PRIV-01** · Must — All data stays in the user's browser on the user's device; nothing is transmitted (NFR-SEC-03).
-- [ ] **DR-PRIV-02** · Must — The only personal data stored is the three teammate names. Users are reminded not to store secrets in Context (FR-M9-10).
+- [x] **DR-PRIV-02** · Must — The only personal data stored is the three teammate names. Users are reminded not to store secrets in Context (FR-M9-10).
 - [ ] **DR-PRIV-03** · Must — Data is retained until the user resets the board or clears site data; Reset (FR-M13-05) removes every `vibetracker.*` key except `prefs` (Should: offer to clear `prefs` too).
-- [ ] **DR-PRIV-04** · Should — A short footer note explains where data lives: "Saved in this browser only. Export to share or back up."
+- [x] **DR-PRIV-04** · Should — A short footer note explains where data lives: "Saved in this browser only. Export to share or back up."
 
 ### 14.5 Verification checklist (run before every tag from M4 onward)
 

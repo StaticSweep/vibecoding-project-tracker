@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, History, ScrollText } from 'lucide-react';
+import { hasContext, isContextStale } from '../lib/context.js';
 import { STAGES, TEAM } from '../lib/constants.js';
 import { formatDueLabel, formatLongDate, getDueState } from '../lib/dates.js';
 import { DUE_STYLES } from '../lib/due.js';
@@ -12,7 +13,7 @@ import Avatar from './Avatar.jsx';
  * One task on the board (DESIGN.md §4.3 / §4.4).
  *
  * M4 shows the data as plain text. Later milestones add:
- *   M9 context indicator · M10 copy button
+ *   M10 copy button
  */
 export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
   const stageIndex = STAGES.findIndex((s) => s.id === task.status);
@@ -24,6 +25,8 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
   const dueLabel = formatDueLabel(task, today);
   const due = DUE_STYLES[getDueState(task, today)];
   const DueIcon = due.icon;
+  const withContext = hasContext(task);
+  const stale = isContextStale(task);
   const titleId = `task-title-${task.id}`;
   const stageSelectId = `task-stage-${task.id}`;
   const ownerSelectId = `task-owner-${task.id}`;
@@ -98,6 +101,31 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
               ))}
             </select>
           </div>
+
+          {/*
+            Context indicator (FR-M9-06): shows the task is ready to resume.
+            An old context (FR-M9-12) gets a different icon, colour and text.
+          */}
+          {withContext && (
+            <span
+              className={`flex shrink-0 items-center gap-1 text-[13px] font-semibold leading-[18px] ${
+                stale ? 'text-due-warning-fg' : 'text-ink-muted'
+              }`}
+              title={stale ? 'The context is more than 3 days old.' : 'This task has context.'}
+            >
+              {stale ? (
+                <History aria-hidden="true" className="h-3.5 w-3.5" />
+              ) : (
+                <ScrollText aria-hidden="true" className="h-3.5 w-3.5" />
+              )}
+              <span className="sr-only">{stale ? 'Old context' : 'Context'}</span>
+              {task.contextTool ? (
+                <span>{task.contextTool}</span>
+              ) : (
+                <span aria-hidden="true">Context</span>
+              )}
+            </span>
+          )}
         </div>
 
         {/* Move controls (FR-M4-07, DESIGN.md §4.5) — no drag-and-drop. */}
