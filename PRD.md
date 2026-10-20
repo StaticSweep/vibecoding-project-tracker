@@ -144,7 +144,8 @@ Keep the Context field of each real task up to date as you work. By the end of t
 Fill in:
 
 - **Team name:** `<TODO>`
-- **Tagline (one sentence):** `<TODO>`
+- **Product name:** Slopify
+- **Tagline (one sentence):** Track the task. Keep the context.
 - **Tracker URL after deploy:** `<TODO>` (Vercel will give it to you)
 
 ## 12. Out of scope (do not build)
@@ -638,7 +639,7 @@ Applies to FR-DATA-04 / FR-DATA-05.
 |---|---|---|---|
 | 1 | Due-state gap in DESIGN.md §2 (24 h – 2 days) | "Tomorrow" counts as *Warning* (see M8 table) | **Agreed** — reflect in DESIGN.md §2 during M3 |
 | 2 | `type-bug` red vs. destructive delete red | Delete uses an outlined/neutral style; filled red only on the confirm button | **Agreed** — reflect in DESIGN.md §4 during M3 |
-| 3 | Drag-and-drop vs. status dropdown | Dropdown or ← / → buttons are mandatory; drag is optional | Open — decide in M3 (DESIGN.md §4) |
+| 3 | Drag-and-drop vs. status dropdown | No drag-and-drop. A stage dropdown and ← / → buttons move tasks | **Decided** in M3 (DESIGN.md §4.5) |
 | 4 | localStorage is per-browser, per-device | A handoff is visible only on the machine where it was made; JSON export/import (FR-DATA-04/05, §14.4.9) is the workaround | **Agreed** |
 | 5 | Should Copy-as-Prompt include anchor links? | No (FR-M10-10 is a *Could*) | Open — decide in M10 |
 | 6 | Time pressure (≈3 h build window) | All *Must* items in milestone order, then *Should* items | Ongoing |
