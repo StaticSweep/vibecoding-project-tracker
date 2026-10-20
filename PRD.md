@@ -195,62 +195,62 @@ These principles are the tie-breaker whenever a requirement below is ambiguous.
 
 #### App shell & shared components (needed from M4 onward)
 
-- [ ] **FR-APP-01** · Must — Header shows the product name (DESIGN.md §6) and the team name from §11, replacing the "Team starter" placeholder.
-- [ ] **FR-APP-02** · Must — `TEAM` in `src/App.jsx` contains the three names from §8; it is the single source of truth for every assignee picker.
-- [ ] **FR-APP-03** · Must — `<title>` in `index.html` is the product name; `<html lang="en">` is set.
-- [ ] **FR-APP-04** · Must — The primary "+" (add task) action is visible in the header at all times without scrolling.
-- [ ] **FR-APP-05** · Must — One shared toast component is used for all notifications: appears bottom-centre or bottom-right, 200 ms fade in/out, auto-dismisses after 3–4 s, can be dismissed manually, announced via an `aria-live="polite"` region. At most 3 toasts stack at once.
-- [ ] **FR-APP-06** · Should — One shared confirm dialog is used for every destructive action (delete, reset, load demo data), with focus defaulting to **Cancel**.
+- [x] **FR-APP-01** · Must — Header shows the product name (DESIGN.md §6) and the team name from §11, replacing the "Team starter" placeholder.
+- [x] **FR-APP-02** · Must — `TEAM` in `src/App.jsx` contains the three names from §8; it is the single source of truth for every assignee picker.
+- [x] **FR-APP-03** · Must — `<title>` in `index.html` is the product name; `<html lang="en">` is set.
+- [x] **FR-APP-04** · Must — The primary "+" (add task) action is visible in the header at all times without scrolling.
+- [x] **FR-APP-05** · Must — One shared toast component is used for all notifications: appears bottom-centre or bottom-right, 200 ms fade in/out, auto-dismisses after 3–4 s, can be dismissed manually, announced via an `aria-live="polite"` region. At most 3 toasts stack at once.
+- [x] **FR-APP-06** · Should — One shared confirm dialog is used for every destructive action (delete, reset, load demo data), with focus defaulting to **Cancel**.
 - [ ] **FR-APP-07** · Could — Favicon matching the wordmark.
 
 #### M4 `data-model` — Board view
 
-- [ ] **FR-M4-01** · Must — The board renders four columns from `STAGES`, left to right, with the exact labels from §7.
-- [ ] **FR-M4-02** · Must — Each task appears in exactly one column — the one whose `id` matches `task.status`.
-- [ ] **FR-M4-03** · Must — On first load (no `vibetracker.tasks` key in localStorage) the board is seeded with 3–4 mock tasks that together cover: both types, at least two columns, at least two assignees, and at least one task with a due date.
-- [ ] **FR-M4-04** · Must — Tasks persist via `useLocalStorage('vibetracker.tasks', …)`. Reloading the page shows the identical board.
-- [ ] **FR-M4-05** · Must — Seed data loads **only** when the key is absent. A user who deletes every task sees an empty board after reload, not the seed tasks again.
-- [ ] **FR-M4-06** · Must — Each card shows at minimum: title, type, assignee and due date (if set). Full visual treatment comes in M6–M9; plain text is acceptable at M4.
-- [ ] **FR-M4-07** · Must — A task can be moved between stages **without drag-and-drop** (status dropdown on the card, or ← / → buttons). Drag-and-drop is optional (DESIGN.md §4) but never the only way.
-- [ ] **FR-M4-08** · Must — Moving a task updates the board immediately and persists.
-- [ ] **FR-M4-09** · Should — Each column header shows a task count, e.g. "In Progress · 3".
-- [ ] **FR-M4-10** · Should — Empty columns show the DESIGN.md §5 empty-state copy instead of blank space.
-- [ ] **FR-M4-11** · Should — Card order within a column is predictable: due date ascending, tasks without a due date last, ties broken by `createdDate` (oldest first).
-- [ ] **FR-M4-12** · Should — At 1280×720 all four columns are visible without horizontal scrolling; a column with many cards scrolls vertically on its own while the header and Anchor Board stay put.
-- [ ] **FR-M4-13** · Should — Long titles are clamped to two lines on the card with an ellipsis; the full title is visible in the modal and in the card's accessible name.
+- [x] **FR-M4-01** · Must — The board renders four columns from `STAGES`, left to right, with the exact labels from §7.
+- [x] **FR-M4-02** · Must — Each task appears in exactly one column — the one whose `id` matches `task.status`.
+- [x] **FR-M4-03** · Must — On first load (no `vibetracker.tasks` key in localStorage) the board is seeded with 3–4 mock tasks that together cover: both types, at least two columns, at least two assignees, and at least one task with a due date.
+- [x] **FR-M4-04** · Must — Tasks persist via `useLocalStorage('vibetracker.tasks', …)`. Reloading the page shows the identical board.
+- [x] **FR-M4-05** · Must — Seed data loads **only** when the key is absent. A user who deletes every task sees an empty board after reload, not the seed tasks again.
+- [x] **FR-M4-06** · Must — Each card shows at minimum: title, type, assignee and due date (if set). Full visual treatment comes in M6–M9; plain text is acceptable at M4.
+- [x] **FR-M4-07** · Must — A task can be moved between stages **without drag-and-drop** (status dropdown on the card, or ← / → buttons). Drag-and-drop is optional (DESIGN.md §4) but never the only way.
+- [x] **FR-M4-08** · Must — Moving a task updates the board immediately and persists.
+- [x] **FR-M4-09** · Should — Each column header shows a task count, e.g. "In Progress · 3".
+- [x] **FR-M4-10** · Should — Empty columns show the DESIGN.md §5 empty-state copy instead of blank space.
+- [x] **FR-M4-11** · Should — Card order within a column is predictable: due date ascending, tasks without a due date last, ties broken by `createdDate` (oldest first).
+- [x] **FR-M4-12** · Should — At 1280×720 all four columns are visible without horizontal scrolling; a column with many cards scrolls vertically on its own while the header and Anchor Board stay put.
+- [x] **FR-M4-13** · Should — Long titles are clamped to two lines on the card with an ellipsis; the full title is visible in the modal and in the card's accessible name.
 
 #### M5 `crud-modal` — Add / edit / delete
 
 *Create*
 
-- [ ] **FR-M5-01** · Must — Clicking "+" opens a modal in **create** mode containing every editable field: title, description, type, status, assignee, due date (context fields join in M9).
-- [ ] **FR-M5-02** · Must — Sensible defaults: type `feature`, status `todo`, assignee = the first teammate (Should: the last-used assignee), due date empty.
-- [ ] **FR-M5-03** · Must — `id` is generated automatically (`crypto.randomUUID()` with a `Date.now()` string fallback); `createdDate` is set to today's **local** date. Neither is user-editable.
-- [ ] **FR-M5-04** · Must — Title is required. Whitespace is trimmed. Attempting to save with an empty title shows an inline error next to the field, in DESIGN.md voice, and moves focus to the title.
-- [ ] **FR-M5-05** · Should — Title is limited to 120 characters, description to 2,000; a character counter appears near the limit.
-- [ ] **FR-M5-06** · Should — Each column has its own small "+" that opens the create modal with status pre-set to that column.
-- [ ] **FR-M5-07** · Should — The modal heading and primary button reflect the mode: "New task" / "Create task" vs. "Edit task" / "Save changes".
+- [x] **FR-M5-01** · Must — Clicking "+" opens a modal in **create** mode containing every editable field: title, description, type, status, assignee, due date (context fields join in M9).
+- [x] **FR-M5-02** · Must — Sensible defaults: type `feature`, status `todo`, assignee = the first teammate (Should: the last-used assignee), due date empty.
+- [x] **FR-M5-03** · Must — `id` is generated automatically (`crypto.randomUUID()` with a `Date.now()` string fallback); `createdDate` is set to today's **local** date. Neither is user-editable.
+- [x] **FR-M5-04** · Must — Title is required. Whitespace is trimmed. Attempting to save with an empty title shows an inline error next to the field, in DESIGN.md voice, and moves focus to the title.
+- [x] **FR-M5-05** · Should — Title is limited to 120 characters, description to 2,000; a character counter appears near the limit.
+- [x] **FR-M5-06** · Should — Each column has its own small "+" that opens the create modal with status pre-set to that column.
+- [x] **FR-M5-07** · Should — The modal heading and primary button reflect the mode: "New task" / "Create task" vs. "Edit task" / "Save changes".
 
 *Edit*
 
-- [ ] **FR-M5-08** · Must — Clicking a card — or pressing Enter / Space while it is focused — opens the same modal in **edit** mode, pre-filled.
-- [ ] **FR-M5-09** · Must — Saving updates the task in place and preserves `id` and `createdDate`.
-- [ ] **FR-M5-10** · Must — Cancel, Esc and clicking the backdrop all close the modal without saving.
-- [ ] **FR-M5-11** · Should — If the form has unsaved changes, closing asks "Discard changes?" first.
+- [x] **FR-M5-08** · Must — Clicking a card — or pressing Enter / Space while it is focused — opens the same modal in **edit** mode, pre-filled.
+- [x] **FR-M5-09** · Must — Saving updates the task in place and preserves `id` and `createdDate`.
+- [x] **FR-M5-10** · Must — Cancel, Esc and clicking the backdrop all close the modal without saving.
+- [x] **FR-M5-11** · Should — If the form has unsaved changes, closing asks "Discard changes?" first.
 
 *Delete*
 
-- [ ] **FR-M5-12** · Must — A Delete action is available in edit mode only, visually separated from Save (e.g. bottom-left vs. bottom-right) and styled as destructive.
-- [ ] **FR-M5-13** · Must — Delete asks for confirmation using the DESIGN.md §5 confirm-delete copy. Confirming removes the task and persists the change.
+- [x] **FR-M5-12** · Must — A Delete action is available in edit mode only, visually separated from Save (e.g. bottom-left vs. bottom-right) and styled as destructive.
+- [x] **FR-M5-13** · Must — Delete asks for confirmation using the DESIGN.md §5 confirm-delete copy. Confirming removes the task and persists the change.
 - [ ] **FR-M5-14** · Could — After deletion, a toast offers **Undo** for 5 s.
 
 *Modal behaviour*
 
-- [ ] **FR-M5-15** · Must — On open, focus moves to the title field; Tab cycles **within** the modal; on close, focus returns to the element that opened it.
-- [ ] **FR-M5-16** · Must — Keyboard: Esc closes; Enter in a single-line input submits; Ctrl/Cmd + Enter submits from a textarea.
-- [ ] **FR-M5-17** · Must — The modal has `role="dialog"`, `aria-modal="true"` and `aria-labelledby` pointing to its heading.
-- [ ] **FR-M5-18** · Must — Every save writes to localStorage immediately — there is no separate "save board" step.
-- [ ] **FR-M5-19** · Should — Page scroll is locked while the modal is open; if the modal is taller than the viewport its body scrolls while the action buttons stay visible.
+- [x] **FR-M5-15** · Must — On open, focus moves to the title field; Tab cycles **within** the modal; on close, focus returns to the element that opened it.
+- [x] **FR-M5-16** · Must — Keyboard: Esc closes; Enter in a single-line input submits; Ctrl/Cmd + Enter submits from a textarea.
+- [x] **FR-M5-17** · Must — The modal has `role="dialog"`, `aria-modal="true"` and `aria-labelledby` pointing to its heading.
+- [x] **FR-M5-18** · Must — Every save writes to localStorage immediately — there is no separate "save board" step.
+- [x] **FR-M5-19** · Should — Page scroll is locked while the modal is open; if the modal is taller than the viewport its body scrolls while the action buttons stay visible.
 
 #### M6 `tag-style` — Feature vs. bug distinction
 
@@ -288,10 +288,10 @@ Due state is computed from date-only values in the user's **local** timezone, co
 - [ ] **FR-M8-01** · Must — Card background or border is tinted according to the table above.
 - [ ] **FR-M8-02** · Must — Every tinted state also shows a text label and icon (e.g. clock / alert), so the state is readable without colour.
 - [ ] **FR-M8-03** · Must — Date comparisons use local dates. Do **not** compare `new Date('YYYY-MM-DD')` (parsed as UTC) to the local current time — compare `YYYY-MM-DD` strings or build local `Date` objects.
-- [ ] **FR-M8-04** · Must — The due date uses the native date input and can be cleared back to `null`.
+- [x] **FR-M8-04** · Must — The due date uses the native date input and can be cleared back to `null`.
 - [ ] **FR-M8-05** · Must — Due tint and type stripe coexist legibly: tint applies to background/border, type stays on the accent stripe and badge.
 - [ ] **FR-M8-06** · Should — Due states are recomputed on every render and on window focus, so a board left open overnight updates.
-- [ ] **FR-M8-07** · Should — Picking a past due date when creating a task shows a soft inline warning ("That date has already passed") but still allows saving.
+- [x] **FR-M8-07** · Should — Picking a past due date when creating a task shows a soft inline warning ("That date has already passed") but still allows saving.
 - [ ] **FR-M8-08** · Could — The header shows an overdue count, e.g. "2 overdue".
 
 #### M9 `context` — Curated Context field
@@ -373,9 +373,9 @@ Continue this task from where the context leaves off. Ask before changing anythi
 
 #### Cross-cutting — Data safety & portability
 
-- [ ] **FR-DATA-01** · Must — Loaded data is normalised: missing fields get defaults, an unknown `status` falls back to `todo`, an unknown `type` falls back to `feature`.
-- [ ] **FR-DATA-02** · Must — Corrupted localStorage (invalid JSON or wrong shape) never produces a blank screen; the app starts with a safe state and shows a non-blocking notice.
-- [ ] **FR-DATA-03** · Should — Before falling back, the corrupted raw value is copied to a backup key (e.g. `vibetracker.tasks.backup`) so it can be recovered.
+- [x] **FR-DATA-01** · Must — Loaded data is normalised: missing fields get defaults, an unknown `status` falls back to `todo`, an unknown `type` falls back to `feature`.
+- [x] **FR-DATA-02** · Must — Corrupted localStorage (invalid JSON or wrong shape) never produces a blank screen; the app starts with a safe state and shows a non-blocking notice.
+- [x] **FR-DATA-03** · Should — Before falling back, the corrupted raw value is copied to a backup key (e.g. `vibetracker.tasks.backup`) so it can be recovered.
 - [ ] **FR-DATA-04** · Should — **Export** downloads tasks + anchors as a JSON file — the only way to move a board between teammates' machines (see §14.6; format in §14.4.9).
 - [ ] **FR-DATA-05** · Could — **Import** a previously exported JSON file, with validation and a confirm-before-replace dialog.
 - [ ] **FR-DATA-06** · Could — Two open tabs stay in sync by listening to the `storage` event.
@@ -392,7 +392,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 - [ ] **NFR-USE-04** · Must · *Consistency & standards* — The same action uses the same control everywhere (type picker, assignee picker, copy button). Each view has one primary button. Only DESIGN.md tokens are used.
 - [ ] **NFR-USE-05** · Must · *Error prevention* — Inputs validate inline before save; destructive buttons are visually and spatially separated from primary ones.
 - [ ] **NFR-USE-06** · Must · *Recognition over recall* — Cards surface type, owner, due state and context presence (see FR-M6/M7/M8/M9).
-- [ ] **NFR-USE-07** · Should · *Flexibility & efficiency* — Keyboard shortcuts: `N` opens a new task (when focus is not in a text field), `Esc` closes, `Ctrl/Cmd + Enter` saves. Shortcuts are shown in button tooltips.
+- [x] **NFR-USE-07** · Should · *Flexibility & efficiency* — Keyboard shortcuts: `N` opens a new task (when focus is not in a text field), `Esc` closes, `Ctrl/Cmd + Enter` saves. Shortcuts are shown in button tooltips.
 - [ ] **NFR-USE-08** · Must · *Aesthetic & minimalist design* — A card shows no more than five pieces of information; the full description lives in the modal (a one-line preview at most).
 - [ ] **NFR-USE-09** · Must · *Help users recover from errors* — Error messages say what happened and how to fix it, in plain language and DESIGN.md voice. No stack traces or codes.
 - [ ] **NFR-USE-10** · Should · *Help & documentation* — Empty states and helper text teach the next action (empty column, empty anchor slot, empty Context field).
@@ -446,7 +446,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 #### Reliability & data integrity
 
 - [ ] **NFR-REL-01** · Must — No data loss on reload, tab close or browser restart.
-- [ ] **NFR-REL-02** · Must — A top-level React error boundary catches render errors and shows a friendly message with a "Reload" option instead of a white screen (Should: plus "Export my data").
+- [x] **NFR-REL-02** · Must — A top-level React error boundary catches render errors and shows a friendly message with a "Reload" option instead of a white screen (Should: plus "Export my data").
 - [ ] **NFR-REL-03** · Must — Zero console errors or warnings (including React `key` warnings) in dev and production.
 - [ ] **NFR-REL-04** · Should — If localStorage is full or unavailable (quota exceeded, private mode), the user sees a notice that changes may not be saved. The current `useLocalStorage` hook ignores this silently — update it to report the failure.
 - [ ] **NFR-REL-05** · Must — The §5 data model is respected: no renamed or removed fields; additions are optional with defaults (see FR-DATA-01).
@@ -466,10 +466,10 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 
 #### Maintainability & code quality
 
-- [ ] **NFR-MAINT-01** · Must — `STAGES` and `TEAM` are imported everywhere they are needed; stage ids, labels and names are never duplicated as string literals.
+- [x] **NFR-MAINT-01** · Must — `STAGES` and `TEAM` are imported everywhere they are needed; stage ids, labels and names are never duplicated as string literals.
 - [ ] **NFR-MAINT-02** · Must — Logic lives in pure helper functions: due state, date formatting, prompt serialisation, URL normalisation and data normalisation.
 - [ ] **NFR-MAINT-03** · Must — `npm run build` succeeds before every milestone tag is pushed.
-- [ ] **NFR-MAINT-04** · Should — Once `App.jsx` passes roughly 300 lines, split it into components (`Board`, `Column`, `TaskCard`, `TaskModal`, `AnchorBoard`, `Toast`, `ConfirmDialog`) and helpers (`src/lib/`).
+- [x] **NFR-MAINT-04** · Should — Once `App.jsx` passes roughly 300 lines, split it into components (`Board`, `Column`, `TaskCard`, `TaskModal`, `AnchorBoard`, `Toast`, `ConfirmDialog`) and helpers (`src/lib/`).
 - [ ] **NFR-MAINT-05** · Should — Commit messages and the PRD stay current when behaviour changes. The Context field of the team's real tasks is kept up to date (feeds the Module 5 "Vibe Coding History" deliverable, §10).
 - [ ] **NFR-MAINT-06** · Could — Unit tests (Vitest) for the pure helpers in NFR-MAINT-02.
 
@@ -487,11 +487,11 @@ These requirements make the §5 data model concrete: where data is stored, what 
 | `vibetracker.tasks.backup` / `vibetracker.anchors.backup` | Raw string of an unreadable value, kept for recovery | string | Should |
 | `vibetracker.prefs` | Per-browser UI preferences: last-used assignee, active filters | `{ lastAssignee?: string, filters?: object }` (JSON) | Could |
 
-- [ ] **DR-STO-01** · Must — All keys use the `vibetracker.` prefix so the app's data is easy to find, export and reset, and never collides with other apps on the same origin.
-- [ ] **DR-STO-02** · Must — Values are stored as JSON (UTF-8 text) via the `useLocalStorage` hook; no other storage mechanism (cookies, IndexedDB, sessionStorage) is used for app data.
-- [ ] **DR-STO-03** · Must — Tasks and anchors live under separate keys, so an anchor edit can never corrupt the task list and vice versa.
-- [ ] **DR-STO-04** · Must — State is updated immutably (new arrays and objects via the setter); stored data is never mutated in place.
-- [ ] **DR-STO-05** · Should — UI-only state (open modal, toast queue, hover, filters unless saved as prefs) is **not** persisted.
+- [x] **DR-STO-01** · Must — All keys use the `vibetracker.` prefix so the app's data is easy to find, export and reset, and never collides with other apps on the same origin.
+- [x] **DR-STO-02** · Must — Values are stored as JSON (UTF-8 text) via the `useLocalStorage` hook; no other storage mechanism (cookies, IndexedDB, sessionStorage) is used for app data.
+- [x] **DR-STO-03** · Must — Tasks and anchors live under separate keys, so an anchor edit can never corrupt the task list and vice versa.
+- [x] **DR-STO-04** · Must — State is updated immutably (new arrays and objects via the setter); stored data is never mutated in place.
+- [x] **DR-STO-05** · Should — UI-only state (open modal, toast queue, hover, filters unless saved as prefs) is **not** persisted.
 
 #### 14.4.2 Task field dictionary
 
@@ -509,11 +509,11 @@ These requirements make the §5 data model concrete: where data is stored, what 
 | `contextTool` | `'Claude' \| 'ChatGPT' \| 'Cursor' \| 'Lovable' \| 'Replit' \| 'Other' \| null` | Yes (may be `null`) | `null` | One of the listed values or `null` | User | Yes |
 | `contextUpdatedAt` | string \| null | Yes (may be `null`) | `null` | Full ISO 8601 timestamp (`new Date().toISOString()`, UTC) | System (FR-M9-04) | Never directly |
 
-- [ ] **DR-TASK-01** · Must — A task is saved only if it satisfies every *Required* and *Validation* rule in the table above; invalid input is blocked in the modal with an inline error (FR-M5-04), never silently fixed.
-- [ ] **DR-TASK-02** · Must — `id` and `createdDate` never change after creation — not on edit, move, handoff, import or migration.
-- [ ] **DR-TASK-03** · Must — Dates follow two deliberate formats: **date-only** fields (`dueDate`, `createdDate`) are local calendar dates as `YYYY-MM-DD`; the **timestamp** field (`contextUpdatedAt`) is UTC ISO 8601 and is converted to local time only for display.
-- [ ] **DR-TASK-04** · Must — Text fields accept the full Unicode range, including emoji, umlauts and code snippets, and round-trip through storage unchanged.
-- [ ] **DR-TASK-05** · Must — Values for `type`, `status` and `contextTool` come from single shared constants (`STAGES`, plus new `TYPES` / `CONTEXT_TOOLS` arrays), never from string literals scattered through the UI.
+- [x] **DR-TASK-01** · Must — A task is saved only if it satisfies every *Required* and *Validation* rule in the table above; invalid input is blocked in the modal with an inline error (FR-M5-04), never silently fixed.
+- [x] **DR-TASK-02** · Must — `id` and `createdDate` never change after creation — not on edit, move, handoff, import or migration.
+- [x] **DR-TASK-03** · Must — Dates follow two deliberate formats: **date-only** fields (`dueDate`, `createdDate`) are local calendar dates as `YYYY-MM-DD`; the **timestamp** field (`contextUpdatedAt`) is UTC ISO 8601 and is converted to local time only for display.
+- [x] **DR-TASK-04** · Must — Text fields accept the full Unicode range, including emoji, umlauts and code snippets, and round-trip through storage unchanged.
+- [x] **DR-TASK-05** · Must — Values for `type`, `status` and `contextTool` come from single shared constants (`STAGES`, plus new `TYPES` / `CONTEXT_TOOLS` arrays), never from string literals scattered through the UI.
 
 #### 14.4.3 Anchor field dictionary
 
@@ -530,14 +530,14 @@ These requirements make the §5 data model concrete: where data is stored, what 
 
 Every value read from localStorage (or imported) passes through `normaliseTasks` / `normaliseAnchors` before reaching React state. The rules extend FR-DATA-01/02.
 
-- [ ] **DR-INT-01** · Must — If the stored value is not valid JSON, or is not an array, the raw string is copied to its `.backup` key (DR-STO table), the app starts from a safe state and shows a non-blocking notice.
-- [ ] **DR-INT-02** · Must — Array entries that are not objects, or that lack a usable `title`, are dropped (and the drop is counted in the notice).
-- [ ] **DR-INT-03** · Must — Missing or invalid fields are replaced with the defaults from §14.4.2: unknown `status` → `'todo'`, unknown `type` → `'feature'`, missing context fields → `''` / `null` / `null`, malformed `dueDate` → `null`, missing `createdDate` → today.
-- [ ] **DR-INT-04** · Must — Duplicate `id`s are resolved by keeping the first task and generating a fresh `id` for each later duplicate — no task is lost.
-- [ ] **DR-INT-05** · Must — An `assignee` not in `TEAM` is **kept as stored** (so no data is destroyed when a name is corrected) and shown in the UI as "Unassigned" until reassigned (FR-M7-05).
-- [ ] **DR-INT-06** · Must — Anchors are rebuilt into the fixed four slots: missing slots restored from `DEFAULT_ANCHORS`, unknown ids and extra entries dropped, invalid URLs set to `null`.
-- [ ] **DR-INT-07** · Should — Unknown extra fields on a task (e.g. added by the M12 secret sauce or a teammate's newer build) are preserved, not stripped, so data survives round-trips between versions.
-- [ ] **DR-INT-08** · Should — Normalisation is idempotent: running it twice gives the same result as running it once.
+- [x] **DR-INT-01** · Must — If the stored value is not valid JSON, or is not an array, the raw string is copied to its `.backup` key (DR-STO table), the app starts from a safe state and shows a non-blocking notice.
+- [x] **DR-INT-02** · Must — Array entries that are not objects, or that lack a usable `title`, are dropped (and the drop is counted in the notice).
+- [x] **DR-INT-03** · Must — Missing or invalid fields are replaced with the defaults from §14.4.2: unknown `status` → `'todo'`, unknown `type` → `'feature'`, missing context fields → `''` / `null` / `null`, malformed `dueDate` → `null`, missing `createdDate` → today.
+- [x] **DR-INT-04** · Must — Duplicate `id`s are resolved by keeping the first task and generating a fresh `id` for each later duplicate — no task is lost.
+- [x] **DR-INT-05** · Must — An `assignee` not in `TEAM` is **kept as stored** (so no data is destroyed when a name is corrected) and shown in the UI as "Unassigned" until reassigned (FR-M7-05).
+- [x] **DR-INT-06** · Must — Anchors are rebuilt into the fixed four slots: missing slots restored from `DEFAULT_ANCHORS`, unknown ids and extra entries dropped, invalid URLs set to `null`.
+- [x] **DR-INT-07** · Should — Unknown extra fields on a task (e.g. added by the M12 secret sauce or a teammate's newer build) are preserved, not stripped, so data survives round-trips between versions.
+- [x] **DR-INT-08** · Should — Normalisation is idempotent: running it twice gives the same result as running it once.
 
 #### 14.4.5 Derived data (computed, never stored)
 
@@ -556,7 +556,7 @@ The following are calculated from stored fields on every render and must **not**
 | Prompt text | the whole task | FR-M10-02 |
 | Card sort order | `dueDate`, `createdDate` | FR-M4-11 |
 
-- [ ] **DR-DER-01** · Must — None of the values above are persisted; each is produced by a pure helper (e.g. `getDueState(task, today)`), which takes "today"/"now" as a parameter so it can be tested with fixed dates.
+- [x] **DR-DER-01** · Must — None of the values above are persisted; each is produced by a pure helper (e.g. `getDueState(task, today)`), which takes "today"/"now" as a parameter so it can be tested with fixed dates.
 
 #### 14.4.6 Data lifecycle (CRUD rules)
 
@@ -571,8 +571,8 @@ The following are calculated from stored fields on every render and must **not**
 | Reset board | Restores `[]` tasks and `DEFAULT_ANCHORS`, removes `.backup` keys | Confirmation required (FR-M13-05) |
 | Load demo data | Replaces tasks and anchors | Confirmation required (FR-M13-03) |
 
-- [ ] **DR-LIFE-01** · Must — Each operation writes **only** the fields listed above; e.g. a handoff can never accidentally change `status` or wipe `context`.
-- [ ] **DR-LIFE-02** · Must — Every operation is persisted in the same interaction that performs it (FR-M5-18); there is no "unsaved board" state.
+- [x] **DR-LIFE-01** · Must — Each operation writes **only** the fields listed above; e.g. a handoff can never accidentally change `status` or wipe `context`.
+- [x] **DR-LIFE-02** · Must — Every operation is persisted in the same interaction that performs it (FR-M5-18); there is no "unsaved board" state.
 - [ ] **DR-LIFE-03** · Should — The model has no `updatedAt` or history fields (§5 is locked). If the M12 secret sauce needs history (e.g. a stage-change log), it is added as a new optional field with a default, per NFR-REL-05.
 
 #### 14.4.7 Schema versioning & migration
@@ -584,8 +584,8 @@ The following are calculated from stored fields on every render and must **not**
 
 #### 14.4.8 Seed & demo data
 
-- [ ] **DR-SEED-01** · Must — Seed tasks (FR-M4-03) live in one constant (e.g. `SEED_TASKS`) and pass every validation rule in §14.4.2.
-- [ ] **DR-SEED-02** · Must — Seed and demo dates are generated **relative to today** at load time (e.g. `addDays(today, -2)`), never hard-coded calendar dates.
+- [x] **DR-SEED-01** · Must — Seed tasks (FR-M4-03) live in one constant (e.g. `SEED_TASKS`) and pass every validation rule in §14.4.2.
+- [x] **DR-SEED-02** · Must — Seed and demo dates are generated **relative to today** at load time (e.g. `addDays(today, -2)`), never hard-coded calendar dates.
 - [ ] **DR-SEED-03** · Must — The demo dataset (FR-M13-01) lives in its own module (e.g. `src/data/demo.js`) and covers every enum value: both types, all four stages, all three teammates, all five due states, at least three `contextTool` values.
 - [ ] **DR-SEED-04** · Must — Demo content is realistic (real hackathon tasks and curated context) but contains no secrets, passwords or personal data beyond teammate names.
 - [ ] **DR-SEED-05** · Should — Placeholder anchor URLs in demo data point to real team deliverables, or are clearly marked placeholders (`https://example.com/...`) that are replaced before the pitch.
@@ -614,7 +614,7 @@ Applies to FR-DATA-04 / FR-DATA-05.
 
 - [ ] **DR-CAP-01** · Must — The app is designed for up to **200 tasks** with contexts of up to **20,000 characters** each, while meeting NFR-PERF-01.
 - [ ] **DR-CAP-02** · Should — The serialised size of all `vibetracker.*` keys is estimated on save (string length × 2 bytes); above roughly 4 MB of the ~5 MB browser limit, the user sees a warning suggesting export and trimming old contexts.
-- [ ] **DR-CAP-03** · Must — A failed write (quota exceeded) is reported to the user (NFR-REL-04) and in-memory state is kept, so nothing typed is lost before they can export.
+- [x] **DR-CAP-03** · Must — A failed write (quota exceeded) is reported to the user (NFR-REL-04) and in-memory state is kept, so nothing typed is lost before they can export.
 
 #### 14.4.11 Privacy & retention
 

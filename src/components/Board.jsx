@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { STAGES } from '../lib/constants.js';
 import { compareTasks } from '../lib/tasks.js';
+import { iconButton } from '../lib/ui.js';
 import TaskCard from './TaskCard.jsx';
 
 /**
  * The four-column Kanban board (M4 data-model, DESIGN.md §4.1).
  */
-export default function Board({ tasks, today, onMove }) {
+export default function Board({ tasks, today, onMove, onOpen, onAdd }) {
   // After a move, put the focus back on the same control of the moved card.
   const [focusRequest, setFocusRequest] = useState(null);
   const [announcement, setAnnouncement] = useState('');
@@ -41,7 +43,14 @@ export default function Board({ tasks, today, onMove }) {
     <>
       <div className="grid h-full min-w-[1088px] grid-cols-4 gap-4">
         {columns.map((column) => (
-          <Column key={column.id} column={column} today={today} onMove={handleMove} />
+          <Column
+            key={column.id}
+            column={column}
+            today={today}
+            onMove={handleMove}
+            onOpen={onOpen}
+            onAdd={onAdd}
+          />
         ))}
       </div>
       <p aria-live="polite" className="sr-only">
@@ -51,7 +60,7 @@ export default function Board({ tasks, today, onMove }) {
   );
 }
 
-function Column({ column, today, onMove }) {
+function Column({ column, today, onMove, onOpen, onAdd }) {
   const headingId = `column-${column.id}`;
   const count = column.tasks.length;
 
@@ -60,7 +69,7 @@ function Column({ column, today, onMove }) {
       aria-labelledby={headingId}
       className="flex min-h-0 flex-col rounded-lg border border-line-subtle bg-surface-page"
     >
-      <header className="flex items-center justify-between px-3 pb-2 pt-3">
+      <header className="flex items-center justify-between px-3 pb-2 pt-2">
         <h2
           id={headingId}
           className="font-heading text-sm font-semibold uppercase leading-5 tracking-[0.05em] text-ink"
@@ -72,7 +81,16 @@ function Column({ column, today, onMove }) {
             <span className="sr-only">{count === 1 ? ' task' : ' tasks'}</span>
           </span>
         </h2>
-        {/* TODO M5 crud-modal: "+" button that adds a task to this stage (FR-M5-06). */}
+        <button
+          type="button"
+          data-add-stage={column.id}
+          onClick={() => onAdd(column.id)}
+          aria-label={`Add task to ${column.label}`}
+          title={`Add task to ${column.label}`}
+          className={iconButton}
+        >
+          <Plus aria-hidden="true" className="h-4 w-4" />
+        </button>
       </header>
 
       {count === 0 ? (
@@ -82,7 +100,7 @@ function Column({ column, today, onMove }) {
       ) : (
         <ul className="flex-1 space-y-2 overflow-y-auto px-3 pb-3">
           {column.tasks.map((task) => (
-            <TaskCard key={task.id} task={task} today={today} onMove={onMove} />
+            <TaskCard key={task.id} task={task} today={today} onMove={onMove} onOpen={onOpen} />
           ))}
         </ul>
       )}

@@ -283,7 +283,7 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 ### 4.10 Toasts
 
 - Toasts show at the bottom right of the screen. A maximum of 3 toasts show at the same time.
-- A toast has `text-primary` as its background and white text. A toast for an error has a `due-overdue` icon.
+- A toast has `text-primary` as its background and white text. A toast for an error has an alert icon in `due-overdue-bg`. The strong `due-overdue` colour has too little contrast on the dark toast.
 - Toasts fade in and fade out in 200 ms. They close after 4 seconds. Each toast has a close button.
 - Toasts use an `aria-live="polite"` region (FR-APP-05).
 

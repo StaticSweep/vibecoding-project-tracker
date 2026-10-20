@@ -8,10 +8,10 @@ import { focusRing, iconButton } from '../lib/ui.js';
  * One task on the board (DESIGN.md §4.3 / §4.4).
  *
  * M4 shows the data as plain text. Later milestones add:
- *   M5 click to edit · M6 type stripe + badge · M7 avatar + hand-off
+ *   M6 type stripe + badge · M7 avatar + hand-off
  *   M8 due tint · M9 context indicator · M10 copy button
  */
-export default function TaskCard({ task, today, onMove }) {
+export default function TaskCard({ task, today, onMove, onOpen }) {
   const stageIndex = STAGES.findIndex((s) => s.id === task.status);
   const prev = STAGES[stageIndex - 1];
   const next = STAGES[stageIndex + 1];
@@ -28,20 +28,27 @@ export default function TaskCard({ task, today, onMove }) {
         data-task-id={task.id}
         tabIndex={-1}
         aria-labelledby={titleId}
-        className={`rounded-lg border border-line-subtle bg-surface-card p-3 transition-shadow duration-150 hover:shadow-sm motion-reduce:transition-none ${focusRing}`}
+        className={`relative rounded-lg border border-line-subtle bg-surface-card p-3 transition-shadow duration-150 hover:shadow-sm focus-within:shadow-sm motion-reduce:transition-none ${focusRing}`}
       >
         {/* TODO M6 tag-style: type stripe + coloured badge with icon. */}
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-ink-muted">
           {typeLabel}
         </p>
 
-        {/* TODO M5 crud-modal: make the card open the edit modal. */}
-        <h3
-          id={titleId}
-          title={task.title}
-          className="mt-1 line-clamp-2 break-words text-[15px] font-semibold leading-[22px] text-ink"
-        >
-          {task.title}
+        {/*
+          The title button covers the whole card (::after), so a click anywhere
+          on the card opens the edit modal (FR-M5-08). Controls sit above it.
+        */}
+        <h3 id={titleId} className="mt-1 text-[15px] font-semibold leading-[22px] text-ink">
+          <button
+            type="button"
+            data-control="open"
+            onClick={() => onOpen(task.id)}
+            title={task.title}
+            className="block w-full cursor-pointer text-left after:absolute after:inset-0 after:rounded-lg after:content-[''] focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand-primary"
+          >
+            <span className="line-clamp-2 break-words">{task.title}</span>
+          </button>
         </h3>
 
         {/* TODO M7 task-owner: avatar + "Hand off to…". TODO M8 due-tint: tint + icon. */}
@@ -58,7 +65,7 @@ export default function TaskCard({ task, today, onMove }) {
         </div>
 
         {/* Move controls (FR-M4-07, DESIGN.md §4.5) — no drag-and-drop. */}
-        <div className="mt-3 flex items-center gap-1">
+        <div className="relative z-10 mt-3 flex items-center gap-1">
           <label htmlFor={stageSelectId} className="sr-only">
             Stage
           </label>
