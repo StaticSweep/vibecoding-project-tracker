@@ -311,15 +311,15 @@ Due state is computed from date-only values in the user's **local** timezone, co
 
 #### M10 `copy-prompt` — "Copy as Prompt Context"
 
-- [ ] **FR-M10-01** · Must — A "Copy as Prompt Context" button is available in the modal **and** as an icon button on each card (with an accessible label and tooltip). One click copies.
-- [ ] **FR-M10-02** · Must — The copied text follows the team's Markdown template (default below). Empty fields are omitted cleanly — the output never contains `undefined`, `null` or empty headings.
-- [ ] **FR-M10-03** · Must — Copy uses `navigator.clipboard.writeText`. If that fails, fall back to a hidden-textarea copy; if that also fails, show the text in a read-only, pre-selected box with "Press Ctrl/Cmd + C to copy".
-- [ ] **FR-M10-04** · Must — Success shows the DESIGN.md §5 copy toast; failure shows an error toast in plain language. Both are announced to screen readers.
-- [ ] **FR-M10-05** · Must — Works on both `localhost` and the deployed Vercel HTTPS URL.
-- [ ] **FR-M10-06** · Should — The button changes to "Copied ✓" for about 2 s after a successful copy.
-- [ ] **FR-M10-07** · Should — Serialisation lives in a pure helper, e.g. `taskToPrompt(task)`, separate from UI code so it is easy to tweak and test.
-- [ ] **FR-M10-08** · Should — A task with no context still copies its details plus the line "No context recorded yet."
-- [ ] **FR-M10-09** · Could — A preview of the output in the modal before copying.
+- [x] **FR-M10-01** · Must — A "Copy as Prompt Context" button is available in the modal **and** as an icon button on each card (with an accessible label and tooltip). One click copies.
+- [x] **FR-M10-02** · Must — The copied text follows the team's Markdown template (default below). Empty fields are omitted cleanly — the output never contains `undefined`, `null` or empty headings.
+- [x] **FR-M10-03** · Must — Copy uses `navigator.clipboard.writeText`. If that fails, fall back to a hidden-textarea copy; if that also fails, show the text in a read-only, pre-selected box with "Press Ctrl/Cmd + C to copy".
+- [x] **FR-M10-04** · Must — Success shows the DESIGN.md §5 copy toast; failure shows an error toast in plain language. Both are announced to screen readers.
+- [x] **FR-M10-05** · Must — Works on both `localhost` and the deployed Vercel HTTPS URL.
+- [x] **FR-M10-06** · Should — The button changes to "Copied ✓" for about 2 s after a successful copy.
+- [x] **FR-M10-07** · Should — Serialisation lives in a pure helper, e.g. `taskToPrompt(task)`, separate from UI code so it is easy to tweak and test.
+- [x] **FR-M10-08** · Should — A task with no context still copies its details plus the line "No context recorded yet."
+- [x] **FR-M10-09** · Could — A preview of the output in the modal before copying.
 - [ ] **FR-M10-10** · Could — Option to append the Anchor Board links to the prompt.
 
 Default template (Person C refines this while M4/M5 are built — see §9):
@@ -467,7 +467,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 #### Maintainability & code quality
 
 - [x] **NFR-MAINT-01** · Must — `STAGES` and `TEAM` are imported everywhere they are needed; stage ids, labels and names are never duplicated as string literals.
-- [ ] **NFR-MAINT-02** · Must — Logic lives in pure helper functions: due state, date formatting, prompt serialisation, URL normalisation and data normalisation.
+- [x] **NFR-MAINT-02** · Must — Logic lives in pure helper functions: due state, date formatting, prompt serialisation, URL normalisation and data normalisation.
 - [ ] **NFR-MAINT-03** · Must — `npm run build` succeeds before every milestone tag is pushed.
 - [x] **NFR-MAINT-04** · Should — Once `App.jsx` passes roughly 300 lines, split it into components (`Board`, `Column`, `TaskCard`, `TaskModal`, `AnchorBoard`, `Toast`, `ConfirmDialog`) and helpers (`src/lib/`).
 - [ ] **NFR-MAINT-05** · Should — Commit messages and the PRD stay current when behaviour changes. The Context field of the team's real tasks is kept up to date (feeds the Module 5 "Vibe Coding History" deliverable, §10).

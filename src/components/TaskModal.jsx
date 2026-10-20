@@ -3,6 +3,8 @@ import { Clock, FilePlus2, Trash2, TriangleAlert, X } from 'lucide-react';
 import Modal from './Modal.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
+import CopyPromptButton from './CopyPromptButton.jsx';
+import { taskToPrompt } from '../lib/prompt.js';
 import { TYPE_STYLES } from '../lib/types.js';
 import { CONTEXT_TOOLS, DESCRIPTION_MAX, STAGES, TEAM, TITLE_MAX, TYPES } from '../lib/constants.js';
 import { CONTEXT_TEMPLATE, CONTEXT_WARN_LENGTH } from '../lib/context.js';
@@ -132,6 +134,22 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
     el?.setSelectionRange(caret, caret);
   }, [focusContext]);
 
+  // The task as it is in the form now (for the copy button and preview).
+  function draftTask() {
+    return {
+      ...(task ?? {}),
+      title: form.title,
+      description: form.description,
+      type: form.type,
+      status: form.status,
+      assignee: form.assignee,
+      dueDate: form.dueDate || null,
+      context: form.context,
+      contextTool: form.contextTool || null,
+      contextUpdatedAt: task?.contextUpdatedAt ?? null,
+    };
+  }
+
   // Ctrl/Cmd + Enter submits from anywhere in the form, including textareas (FR-M5-16).
   function handleFormKeyDown(e) {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -159,9 +177,13 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
             <h2 id={ids.heading} className="font-heading text-xl font-semibold leading-7">
               {isEdit ? 'Edit task' : 'New task'}
             </h2>
-            <button type="button" onClick={requestClose} aria-label="Close" className={iconButton}>
-              <X aria-hidden="true" className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* M10: copies what is in the form now, saved or not */}
+              <CopyPromptButton getText={() => taskToPrompt(draftTask(), { today })} />
+              <button type="button" onClick={requestClose} aria-label="Close" className={iconButton}>
+                <X aria-hidden="true" className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Body — scrolls when taller than the viewport (FR-M5-19) */}
@@ -364,6 +386,16 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                   </p>
                 )}
               </div>
+
+              {/* FR-M10-09: preview of the copied text */}
+              <details className="group rounded-md border border-line-subtle">
+                <summary className="flex h-9 cursor-pointer items-center px-3 text-sm font-semibold text-ink hover:bg-brand-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+                  Preview the prompt
+                </summary>
+                <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words border-t border-line-subtle bg-surface-page px-3 py-2 font-mono text-[13px] leading-5 text-ink">
+                  {taskToPrompt(draftTask(), { today })}
+                </pre>
+              </details>
             </div>
           </div>
 

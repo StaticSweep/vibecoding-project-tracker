@@ -8,12 +8,11 @@ import { TYPE_STYLES } from '../lib/types.js';
 import { focusRing, iconButton } from '../lib/ui.js';
 import TypeBadge from './TypeBadge.jsx';
 import Avatar from './Avatar.jsx';
+import CopyPromptButton from './CopyPromptButton.jsx';
+import { taskToPrompt } from '../lib/prompt.js';
 
 /**
  * One task on the board (DESIGN.md §4.3 / §4.4).
- *
- * M4 shows the data as plain text. Later milestones add:
- *   M10 copy button
  */
 export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
   const stageIndex = STAGES.findIndex((s) => s.id === task.status);
@@ -106,26 +105,32 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             Context indicator (FR-M9-06): shows the task is ready to resume.
             An old context (FR-M9-12) gets a different icon, colour and text.
           */}
-          {withContext && (
-            <span
-              className={`flex shrink-0 items-center gap-1 text-[13px] font-semibold leading-[18px] ${
-                stale ? 'text-due-warning-fg' : 'text-ink-muted'
-              }`}
-              title={stale ? 'The context is more than 3 days old.' : 'This task has context.'}
-            >
-              {stale ? (
-                <History aria-hidden="true" className="h-3.5 w-3.5" />
-              ) : (
-                <ScrollText aria-hidden="true" className="h-3.5 w-3.5" />
-              )}
-              <span className="sr-only">{stale ? 'Old context' : 'Context'}</span>
-              {task.contextTool ? (
-                <span>{task.contextTool}</span>
-              ) : (
-                <span aria-hidden="true">Context</span>
-              )}
-            </span>
-          )}
+          <div className="flex shrink-0 items-center gap-1">
+            {withContext && (
+              <span
+                className={`flex shrink-0 items-center gap-1 text-[13px] font-semibold leading-[18px] ${
+                  stale ? 'text-due-warning-fg' : 'text-ink-muted'
+                }`}
+                title={stale ? 'The context is more than 3 days old.' : 'This task has context.'}
+              >
+                {stale ? (
+                  <History aria-hidden="true" className="h-3.5 w-3.5" />
+                ) : (
+                  <ScrollText aria-hidden="true" className="h-3.5 w-3.5" />
+                )}
+                <span className="sr-only">{stale ? 'Old context' : 'Context'}</span>
+                {task.contextTool ? (
+                  <span>{task.contextTool}</span>
+                ) : (
+                  <span aria-hidden="true">Context</span>
+                )}
+              </span>
+            )}
+            {/* M10: one click copies the task as a prompt (FR-M10-01) */}
+            <div className="relative z-10">
+              <CopyPromptButton variant="icon" getText={() => taskToPrompt(task, { today })} />
+            </div>
+          </div>
         </div>
 
         {/* Move controls (FR-M4-07, DESIGN.md §4.5) — no drag-and-drop. */}
