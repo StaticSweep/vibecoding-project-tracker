@@ -345,15 +345,15 @@ Continue this task from where the context leaves off. Ask before changing anythi
 
 #### M11 `anchors` — Deliverable Anchor Board
 
-- [ ] **FR-M11-01** · Must — An Anchor Board sits above the Kanban with exactly four fixed slots, in order: Presentation, Demo, Report, Documentation (ids per §5).
-- [ ] **FR-M11-02** · Must — Anchors persist via `useLocalStorage('vibetracker.anchors', …)`.
-- [ ] **FR-M11-03** · Must — An empty slot shows a clear "Add link" affordance (DESIGN.md §4 empty-state style). A filled slot shows the label and the link's hostname and opens in a new tab with `rel="noopener noreferrer"`.
-- [ ] **FR-M11-04** · Must — Users can add, edit and clear each URL inline or in a small popover; Enter saves, Esc cancels.
-- [ ] **FR-M11-05** · Must — URL validation: accept `http`/`https`; prepend `https://` if the scheme is missing; reject any other scheme (e.g. `javascript:`) with an inline error.
-- [ ] **FR-M11-06** · Should — Opening and editing are separate targets (the link opens; a pencil icon edits) to prevent accidental navigation or accidental edits.
-- [ ] **FR-M11-07** · Should — A progress hint shows completion, e.g. "2 of 4 deliverables linked".
-- [ ] **FR-M11-08** · Should — The Anchor Board is compact (about 120 px tall or less) so the Kanban stays above the fold at 1280×720.
-- [ ] **FR-M11-09** · Could — A copy-link button per filled slot.
+- [x] **FR-M11-01** · Must — An Anchor Board sits above the Kanban with exactly four fixed slots, in order: Presentation, Demo, Report, Documentation (ids per §5).
+- [x] **FR-M11-02** · Must — Anchors persist via `useLocalStorage('vibetracker.anchors', …)`.
+- [x] **FR-M11-03** · Must — An empty slot shows a clear "Add link" affordance (DESIGN.md §4 empty-state style). A filled slot shows the label and the link's hostname and opens in a new tab with `rel="noopener noreferrer"`.
+- [x] **FR-M11-04** · Must — Users can add, edit and clear each URL inline or in a small popover; Enter saves, Esc cancels.
+- [x] **FR-M11-05** · Must — URL validation: accept `http`/`https`; prepend `https://` if the scheme is missing; reject any other scheme (e.g. `javascript:`) with an inline error.
+- [x] **FR-M11-06** · Should — Opening and editing are separate targets (the link opens; a pencil icon edits) to prevent accidental navigation or accidental edits.
+- [x] **FR-M11-07** · Should — A progress hint shows completion, e.g. "2 of 4 deliverables linked".
+- [x] **FR-M11-08** · Should — The Anchor Board is compact (about 120 px tall or less) so the Kanban stays above the fold at 1280×720.
+- [x] **FR-M11-09** · Could — A copy-link button per filled slot.
 
 #### M12 `secret-sauce` — The team's differentiator
 
@@ -454,7 +454,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 #### Security & privacy
 
 - [ ] **NFR-SEC-01** · Must — User content is rendered as text through React's default escaping; no `dangerouslySetInnerHTML`. If Markdown rendering is ever added to the Context field, its output must be sanitised.
-- [ ] **NFR-SEC-02** · Must — Anchor URLs are restricted to `http`/`https` (FR-M11-05); all external links use `rel="noopener noreferrer"`.
+- [x] **NFR-SEC-02** · Must — Anchor URLs are restricted to `http`/`https` (FR-M11-05); all external links use `rel="noopener noreferrer"`.
 - [ ] **NFR-SEC-03** · Must — No data leaves the browser: no analytics, tracking or third-party calls (web-font CDNs excepted). No secrets committed to the repo.
 - [x] **NFR-SEC-04** · Should — Users are told that data lives unencrypted in this browser only (FR-M9-10, plus a footer note).
 
@@ -523,8 +523,8 @@ These requirements make the §5 data model concrete: where data is stored, what 
 | `label` | string | Yes | `'Presentation'`, `'Demo'`, `'Report'`, `'Documentation'` | Fixed display text matching the id | Never (Could: editable) |
 | `url` | string \| null | Yes (may be `null`) | `null` | Absolute `http`/`https` URL, ≤ 2,048 chars, normalised per FR-M11-05; empty input stored as `null` | Yes |
 
-- [ ] **DR-ANC-01** · Must — The stored anchors array always holds exactly four entries in the fixed order above; a default array is defined as a single constant (e.g. `DEFAULT_ANCHORS`).
-- [ ] **DR-ANC-02** · Must — Only normalised URLs are stored: whitespace trimmed, `https://` prepended if the scheme is missing, anything other than `http`/`https` rejected before save.
+- [x] **DR-ANC-01** · Must — The stored anchors array always holds exactly four entries in the fixed order above; a default array is defined as a single constant (e.g. `DEFAULT_ANCHORS`).
+- [x] **DR-ANC-02** · Must — Only normalised URLs are stored: whitespace trimmed, `https://` prepended if the scheme is missing, anything other than `http`/`https` rejected before save.
 
 #### 14.4.4 Integrity & normalisation on load
 

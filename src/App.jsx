@@ -11,6 +11,8 @@ import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Board from './components/Board.jsx';
+import AnchorBoard from './components/AnchorBoard.jsx';
+import { DEFAULT_ANCHORS, normaliseAnchors } from './lib/anchors.js';
 import TaskModal from './components/TaskModal.jsx';
 import SegmentedControl from './components/SegmentedControl.jsx';
 
@@ -27,7 +29,7 @@ import SegmentedControl from './components/SegmentedControl.jsx';
  *                             Toast, ErrorBoundary
  *
  * Milestones still to build — search for `TODO M<n>`:
- *   M9 context · M10 copy-prompt · M11 anchors · M12 secret-sauce · M13 pitch-ready
+ *   M12 secret-sauce · M13 pitch-ready
  */
 
 // The starter exported these from App.jsx; keep the exports for compatibility.
@@ -74,16 +76,24 @@ function Tracker() {
   // DR-MIG-01: record the schema version once the data is loaded and migrated.
   useEffect(writeSchemaVersion, []);
 
+  // M11: the four deliverable links (DR-ANC-01, DR-INT-06).
+  const [anchors, setAnchors, anchorsNotice] = useLocalStorage(STORAGE_KEYS.anchors, DEFAULT_ANCHORS, {
+    normalise: normaliseAnchors,
+    fallback: DEFAULT_ANCHORS,
+  });
+  const setAnchorUrl = (id, url) =>
+    setAnchors((list) => list.map((a) => (a.id === id ? { ...a, url } : a))); // writes `url` only
+
   // DR-INT-01: tell the user once if saved data had to be repaired.
   const noticeShown = useRef(false);
   useEffect(() => {
-    if (!tasksNotice || noticeShown.current) return;
+    if (!(tasksNotice || anchorsNotice) || noticeShown.current) return;
     noticeShown.current = true;
     toast({
       tone: 'error',
       message: 'Slopify cannot read some saved data. A backup copy is in the browser.',
     });
-  }, [tasksNotice, toast]);
+  }, [tasksNotice, anchorsNotice, toast]);
 
   // Per-browser UI preferences (DR-STO table: `vibetracker.prefs`).
   const [prefs, setPrefs] = useLocalStorage(STORAGE_KEYS.prefs, {}, {
@@ -201,9 +211,6 @@ function Tracker() {
   // FR-M8-08: overdue count for the header.
   const overdueCount = tasks.filter((t) => getDueState(t, today) === 'overdue').length;
 
-  // TODO M11 anchors:
-  //   const [anchors, setAnchors] = useLocalStorage(STORAGE_KEYS.anchors, DEFAULT_ANCHORS, …);
-
   return (
     <div className="flex h-screen flex-col bg-surface-page font-sans text-ink">
       <header className="flex items-end justify-between gap-4 px-6 pb-4 pt-6">
@@ -275,7 +282,9 @@ function Tracker() {
         </div>
       </header>
 
-      {/* TODO M11 anchors: render the Anchor Board (Presentation / Demo / Report / Documentation) here. */}
+      <div className="overflow-x-auto">
+        <AnchorBoard anchors={anchors} onChange={setAnchorUrl} />
+      </div>
 
       <main className="min-h-0 flex-1 overflow-x-auto px-6">
         <Board
