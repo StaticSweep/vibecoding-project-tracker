@@ -58,6 +58,13 @@ Task = {
   context: string,               // M9 context — curated briefing for the next AI / teammate
   contextTool: string | null,    // M9 context — 'Claude' | 'ChatGPT' | 'Cursor' | 'Lovable' | 'Replit' | 'Other'
   contextUpdatedAt: string|null, // M9 context — ISO timestamp set automatically on save
+
+  // Optional, added in M12 (additive per NFR-REL-05; default []):
+  contextHistory: Array<{        // earlier context versions, newest first, max 20
+    context: string,
+    contextTool: string | null,
+    savedAt: string | null,      // ISO timestamp of that version
+  }>,
 }
 
 // One of four pinned deliverable slots.
@@ -147,6 +154,22 @@ Fill in:
 - **Product name:** Slopify
 - **Tagline (one sentence):** Track the task. Keep the context.
 - **Tracker URL after deploy:** `<TODO>` (Vercel will give it to you)
+
+### Secret sauce (M12): Prompt history timeline
+
+**The problem.** A prompt is never written once. The team rewrites a task's context many times, and the version that worked on Tuesday is gone by Thursday. When a new prompt makes the AI go the wrong way, nobody can get the good one back. This is pain #2 from §1, one level deeper.
+
+**What Slopify does.** Every time a task's context or tool changes, Slopify keeps the previous version. The edit modal shows a **Prompt history** timeline: each version with its number, its age and the AI tool it was written for. A teammate can:
+
+- **Show** any version to read it.
+- **Copy** any version as a full "Copy as Prompt Context" prompt, to go back to an approach that worked.
+- **Restore** any version into the Context field. Saving keeps the current text in the history too, so nothing is ever lost.
+
+On the board, each card shows how many versions its prompt has (for example "Claude · v4"), so the team can see which tasks needed the most iteration.
+
+**Why it is ours.** Linear, Jira and Notion track task history. Slopify tracks *prompt* history. It turns the Context field from a note into a record of how the team and the AI found the answer, which also feeds the Module 5 "Vibe Coding History" deliverable (§10).
+
+**Limits.** The newest 20 earlier versions per task are kept, to protect the browser storage limit (DR-CAP). The data is the optional `contextHistory` field (§5); the storage schema is now version 2 (DR-MIG).
 
 ## 12. Out of scope (do not build)
 
@@ -357,11 +380,11 @@ Continue this task from where the context leaves off. Ask before changing anythi
 
 #### M12 `secret-sauce` — The team's differentiator
 
-- [ ] **FR-M12-01** · Must — The feature is described in this PRD (add a short paragraph under §11): what user problem it solves and why it is uniquely ours.
-- [ ] **FR-M12-02** · Must — It is visible in the demo within the first two minutes of the pitch flow.
-- [ ] **FR-M12-03** · Must — It does not break any M4–M11 requirement (run the §14.5 regression check).
-- [ ] **FR-M12-04** · Must — It meets the same non-functional requirements as everything else (accessibility, persistence, no console errors).
-- [ ] **FR-M12-05** · Should — It is discoverable without a verbal explanation (a label, empty state or one-line hint).
+- [x] **FR-M12-01** · Must — The feature is described in this PRD (add a short paragraph under §11): what user problem it solves and why it is uniquely ours.
+- [x] **FR-M12-02** · Must — It is visible in the demo within the first two minutes of the pitch flow.
+- [x] **FR-M12-03** · Must — It does not break any M4–M11 requirement (run the §14.5 regression check).
+- [x] **FR-M12-04** · Must — It meets the same non-functional requirements as everything else (accessibility, persistence, no console errors).
+- [x] **FR-M12-05** · Should — It is discoverable without a verbal explanation (a label, empty state or one-line hint).
 
 #### M13 `pitch-ready` — Demo dataset & rehearsal
 
@@ -573,7 +596,7 @@ The following are calculated from stored fields on every render and must **not**
 
 - [x] **DR-LIFE-01** · Must — Each operation writes **only** the fields listed above; e.g. a handoff can never accidentally change `status` or wipe `context`.
 - [x] **DR-LIFE-02** · Must — Every operation is persisted in the same interaction that performs it (FR-M5-18); there is no "unsaved board" state.
-- [ ] **DR-LIFE-03** · Should — The model has no `updatedAt` or history fields (§5 is locked). If the M12 secret sauce needs history (e.g. a stage-change log), it is added as a new optional field with a default, per NFR-REL-05.
+- [x] **DR-LIFE-03** · Should — The model has no `updatedAt` or history fields (§5 is locked). If the M12 secret sauce needs history (e.g. a stage-change log), it is added as a new optional field with a default, per NFR-REL-05.
 
 #### 14.4.7 Schema versioning & migration
 

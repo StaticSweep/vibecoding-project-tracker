@@ -1,5 +1,6 @@
 import { STAGE_IDS, TEAM, TYPE_IDS, CONTEXT_TOOLS } from './constants.js';
 import { addDays, isISODate } from './dates.js';
+import { normaliseHistory } from './history.js';
 
 /**
  * @typedef {Object} Task
@@ -14,6 +15,8 @@ import { addDays, isISODate } from './dates.js';
  * @property {string} context               M9
  * @property {string|null} contextTool      M9
  * @property {string|null} contextUpdatedAt M9, ISO timestamp
+ * @property {Array<{context: string, contextTool: string|null, savedAt: string|null}>} contextHistory
+ *           M12, earlier context versions, newest first (optional, default [])
  */
 
 /** New unique task id (FR-M5-03). */
@@ -54,6 +57,7 @@ export function normaliseTask(raw, today) {
       typeof raw.contextUpdatedAt === 'string' && !Number.isNaN(Date.parse(raw.contextUpdatedAt))
         ? raw.contextUpdatedAt
         : null,
+    contextHistory: normaliseHistory(raw.contextHistory), // M12
   };
 }
 
@@ -108,7 +112,7 @@ export function compareTasks(a, b) {
  * Dates are relative to `today`, so the due states stay correct.
  */
 export function buildSeedTasks(today) {
-  const base = { description: '', context: '', contextTool: null, contextUpdatedAt: null };
+  const base = { description: '', context: '', contextTool: null, contextUpdatedAt: null, contextHistory: [] };
   return [
     {
       ...base,

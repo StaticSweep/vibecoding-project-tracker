@@ -4,8 +4,9 @@ import { STORAGE_KEYS } from './constants.js';
  * Data schema versioning (PRD §14.4.7, DR-MIG-01…03).
  *   v0 — tasks without the M9 context fields
  *   v1 — the full PRD §5 model
+ *   v2 — adds the optional M12 `contextHistory` list
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Stored schema version. A missing or unreadable `meta` key counts as v0. */
 export function readSchemaVersion() {
@@ -33,10 +34,16 @@ export function writeSchemaVersion() {
 export function migrateTasks(raw, fromVersion) {
   if (!Array.isArray(raw) || fromVersion >= SCHEMA_VERSION) return raw;
 
+  const isTask = (t) => t && typeof t === 'object' && !Array.isArray(t);
+  let tasks = raw;
+
   // v0 → v1: add the M9 context fields.
-  return raw.map((t) =>
-    t && typeof t === 'object' && !Array.isArray(t)
-      ? { context: '', contextTool: null, contextUpdatedAt: null, ...t }
-      : t,
-  );
+  if (fromVersion < 1) {
+    tasks = tasks.map((t) => (isTask(t) ? { context: '', contextTool: null, contextUpdatedAt: null, ...t } : t));
+  }
+  // v1 → v2: add the M12 prompt history.
+  if (fromVersion < 2) {
+    tasks = tasks.map((t) => (isTask(t) ? { contextHistory: [], ...t } : t));
+  }
+  return tasks;
 }

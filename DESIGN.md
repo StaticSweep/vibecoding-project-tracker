@@ -214,9 +214,9 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 ```
 ┌─┬──────────────────────────────────────────┐
-│▌│ [FEATURE]                 ⏰ Due tomorrow │  ← type badge · due label (M6, M8)
+│▌│ [FEATURE]           ⏰ Due tomorrow [⧉]   │  ← type badge · due label (M6, M8) · copy (M10)
 │▌│ Card title, maximum two lines, then …    │  ← card title
-│▌│ (AB) Alex B. ▾            ✦ Claude [⧉]   │  ← avatar + Hand off to… · context (M9) · copy (M10)
+│▌│ (AB) Alex B. ▾           ✦ Claude · v4   │  ← avatar + Hand off to… · context + versions (M9, M12)
 │▌│ [Stage ▾]                       [←] [→]  │  ← move controls
 └─┴──────────────────────────────────────────┘
  ↑ 4 px type stripe (type-feature or type-bug)
@@ -316,7 +316,17 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 - Use [Lucide icons](https://lucide.dev) only. The size is 16 px on cards and 20 px in the header.
 - An icon never shows without a text label or an accessible name.
 
-### 4.16 Motion
+### 4.16 Prompt history timeline (M12)
+
+- The timeline is in the edit modal, below the Context field. It is a disclosure with the title "Prompt history" and the number of versions.
+- The timeline opens automatically when a task has more than one version.
+- The newest version is at the top. A vertical `line-subtle` line connects the versions.
+- The current version has a filled `brand-primary` dot. Earlier versions have an empty `line-strong` dot.
+- Each version shows its number, its age and its tool. Each version has "Show", a copy icon and "Restore". The current version has no "Restore".
+- "Restore" puts the text in the Context field and moves the focus there. The user must save to keep it.
+- On the card, the context indicator shows the number of versions, for example "Claude · v4". If the space is too small, the tool name is cut, not the owner name.
+
+### 4.17 Motion
 
 - Toasts fade in 200 ms. Card hover shadows change in 150 ms.
 - There is no other animation.
@@ -384,6 +394,11 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 | Newer data version | A newer version of Slopify saved this board. You can read it, but you cannot change it. | DR-MIG-04 |
 | Error screen | Slopify has a problem. Reload the page. If the problem continues, export your data. | NFR-REL-02 |
 | Footer privacy note | Slopify keeps your data in this browser only. Export the board to share it or to keep a copy. | DR-PRIV-04 |
+| Timeline title | Prompt history · {n} versions | M12 |
+| Version row | Version {n} (current) · {time} ago · {tool} | M12 |
+| Version buttons | Show · Hide · Restore | M12 |
+| Restore tooltip | Put this version in the Context field. Save to keep it. | M12 |
+| Card version count | {tool} · v{n} | M12 |
 
 ---
 
@@ -402,7 +417,7 @@ These items are not part of `design-done`:
 
 - A dark mode toggle. Slopify has one light mode.
 - Multiple themes. One brand applies to all screens.
-- Animation other than the items in §4.16.
+- Animation other than the items in §4.17.
 - Drag-and-drop (§4.5).
 - A custom icon set. Use Lucide icons only.
 - Colour as the identity of a person (§2.4).

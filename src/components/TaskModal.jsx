@@ -4,6 +4,7 @@ import Modal from './Modal.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
 import CopyPromptButton from './CopyPromptButton.jsx';
+import PromptHistory from './PromptHistory.jsx';
 import { taskToPrompt } from '../lib/prompt.js';
 import { TYPE_STYLES } from '../lib/types.js';
 import { CONTEXT_TOOLS, DESCRIPTION_MAX, STAGES, TEAM, TITLE_MAX, TYPES } from '../lib/constants.js';
@@ -120,19 +121,26 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
   // FR-M9-09: fill an empty Context field with the template headings.
   // The button disappears once the field is filled, so focus moves to the
   // textarea right after that render (not via the removed button).
-  const [focusContext, setFocusContext] = useState(false);
+  // `focusContext` holds the caret position to put in the textarea, or null.
+  const [focusContext, setFocusContext] = useState(null);
   function insertTemplate() {
     setForm((f) => ({ ...f, context: CONTEXT_TEMPLATE }));
-    setFocusContext(true);
+    setFocusContext(CONTEXT_TEMPLATE.indexOf('\n') + 1); // the line after "## Goal"
   }
   useEffect(() => {
-    if (!focusContext) return;
-    setFocusContext(false);
+    if (focusContext === null) return;
+    setFocusContext(null);
     const el = contextRef.current;
-    const caret = CONTEXT_TEMPLATE.indexOf('\n') + 1; // start of the line after "## Goal"
     el?.focus();
-    el?.setSelectionRange(caret, caret);
+    el?.setSelectionRange(focusContext, focusContext);
   }, [focusContext]);
+
+  // M12: put an earlier version back in the form. Saving keeps it (and moves
+  // the current text into the history).
+  function restoreVersion(version) {
+    setForm((f) => ({ ...f, context: version.context, contextTool: version.contextTool ?? '' }));
+    setFocusContext(0);
+  }
 
   // The task as it is in the form now (for the copy button and preview).
   function draftTask() {
@@ -386,6 +394,11 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                   </p>
                 )}
               </div>
+
+              {/* M12 secret sauce: every saved version of this prompt */}
+              {isEdit && (
+                <PromptHistory task={task} draft={draftTask} today={today} onRestore={restoreVersion} />
+              )}
 
               {/* FR-M10-09: preview of the copied text */}
               <details className="group rounded-md border border-line-subtle">

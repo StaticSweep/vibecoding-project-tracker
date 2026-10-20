@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, History, ScrollText } from 'lucide-react';
 import { hasContext, isContextStale } from '../lib/context.js';
+import { versionCount } from '../lib/history.js';
 import { STAGES, TEAM } from '../lib/constants.js';
 import { formatDueLabel, formatLongDate, getDueState } from '../lib/dates.js';
 import { DUE_STYLES } from '../lib/due.js';
@@ -26,6 +27,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
   const DueIcon = due.icon;
   const withContext = hasContext(task);
   const stale = isContextStale(task);
+  const versions = versionCount(task);
   const titleId = `task-title-${task.id}`;
   const stageSelectId = `task-stage-${task.id}`;
   const ownerSelectId = `task-owner-${task.id}`;
@@ -43,15 +45,21 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
         <div className="flex items-center justify-between gap-2">
           <TypeBadge type={task.type} />
           {/* Due label: colour + icon + text, never colour alone (FR-M8-02) */}
-          {dueLabel && (
-            <span
-              className={`flex shrink-0 items-center gap-1 text-[13px] font-semibold leading-[18px] ${due.label}`}
-              title={task.dueDate ? formatLongDate(task.dueDate) : undefined}
-            >
-              {DueIcon && <DueIcon aria-hidden="true" className="h-3.5 w-3.5" />}
-              {dueLabel}
-            </span>
-          )}
+          <div className="flex items-center gap-1">
+            {dueLabel && (
+              <span
+                className={`flex shrink-0 items-center gap-1 text-[13px] font-semibold leading-[18px] ${due.label}`}
+                title={task.dueDate ? formatLongDate(task.dueDate) : undefined}
+              >
+                {DueIcon && <DueIcon aria-hidden="true" className="h-3.5 w-3.5" />}
+                {dueLabel}
+              </span>
+            )}
+            {/* M10: one click copies the task as a prompt (FR-M10-01) */}
+            <div className="relative z-10 -my-1.5 shrink-0">
+              <CopyPromptButton variant="icon" getText={() => taskToPrompt(task, { today })} />
+            </div>
+          </div>
         </div>
 
         {/*
@@ -75,7 +83,8 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             Owner + "Hand off to…" (FR-M7-01/02). The select shows the owner's
             name, so the name is always visible next to the avatar.
           */}
-          <div className="relative z-10 flex min-w-0 items-center gap-1.5">
+          {/* The owner keeps its full width; the context indicator shrinks first. */}
+          <div className="relative z-10 flex shrink-0 items-center gap-1">
             <Avatar name={task.assignee} />
             <label htmlFor={ownerSelectId} className="sr-only">
               Hand off to…
@@ -86,18 +95,17 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
               value={task.assignee}
               onChange={(e) => onHandOff(task.id, e.target.value)}
               title="Hand off to…"
-              className={`h-7 min-w-0 max-w-full truncate rounded-md border border-transparent bg-transparent pl-1 pr-6 text-sm text-ink hover:border-line-strong hover:bg-surface-card ${focusRing}`}
+              className={`h-7 max-w-[9rem] truncate rounded-md border border-transparent bg-transparent pl-1 pr-5 text-sm text-ink hover:border-line-strong hover:bg-surface-card ${focusRing}`}
             >
-              {!known && (
-                <option value={task.assignee}>
-                  Unassigned
-                </option>
-              )}
-              {TEAM.map((name) => (
-                <option key={name} value={name}>
-                  {name === task.assignee ? name : `Hand off to ${name}`}
-                </option>
-              ))}
+              {!known && <option value={task.assignee}>Unassigned</option>}
+              {/* Plain names keep the select as narrow as the longest name. */}
+              <optgroup label="Hand off to…">
+                {TEAM.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 
@@ -105,31 +113,34 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             Context indicator (FR-M9-06): shows the task is ready to resume.
             An old context (FR-M9-12) gets a different icon, colour and text.
           */}
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
             {withContext && (
               <span
-                className={`flex shrink-0 items-center gap-1 text-[13px] font-semibold leading-[18px] ${
+                className={`flex min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap text-[13px] font-semibold leading-[18px] ${
                   stale ? 'text-due-warning-fg' : 'text-ink-muted'
                 }`}
                 title={stale ? 'The context is more than 3 days old.' : 'This task has context.'}
               >
                 {stale ? (
-                  <History aria-hidden="true" className="h-3.5 w-3.5" />
+                  <History aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                 ) : (
-                  <ScrollText aria-hidden="true" className="h-3.5 w-3.5" />
+                  <ScrollText aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                 )}
                 <span className="sr-only">{stale ? 'Old context' : 'Context'}</span>
                 {task.contextTool ? (
-                  <span>{task.contextTool}</span>
+                  <span className="truncate">{task.contextTool}</span>
                 ) : (
                   <span aria-hidden="true">Context</span>
                 )}
+                {/* M12: how many prompt versions this task has */}
+                {versions > 1 && (
+                  <span className="shrink-0 font-mono text-xs font-normal">
+                    <span aria-hidden="true">· v{versions}</span>
+                    <span className="sr-only">, {versions} versions</span>
+                  </span>
+                )}
               </span>
             )}
-            {/* M10: one click copies the task as a prompt (FR-M10-01) */}
-            <div className="relative z-10">
-              <CopyPromptButton variant="icon" getText={() => taskToPrompt(task, { today })} />
-            </div>
           </div>
         </div>
 

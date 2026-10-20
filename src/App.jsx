@@ -5,6 +5,7 @@ import { TYPE_STYLES } from './lib/types.js';
 import { getDueState, todayISO } from './lib/dates.js';
 import { buildSeedTasks, createId, isKnownAssignee, normaliseTasks } from './lib/tasks.js';
 import { nextContextUpdatedAt } from './lib/context.js';
+import { nextHistory } from './lib/history.js';
 import { migrateTasks, readSchemaVersion, writeSchemaVersion } from './lib/schema.js';
 import { buttonPrimary, focusRing } from './lib/ui.js';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
@@ -170,6 +171,7 @@ function Tracker() {
           ...fields,
           createdDate: todayISO(),
           contextUpdatedAt: nextContextUpdatedAt(null, fields),
+          contextHistory: [],
         },
       ]);
       // Do not hide the new task behind an active filter.
@@ -179,7 +181,12 @@ function Tracker() {
       setTasks((list) =>
         list.map((t) =>
           t.id === editor.id
-            ? { ...t, ...fields, contextUpdatedAt: nextContextUpdatedAt(t, fields) }
+            ? {
+                ...t,
+                ...fields,
+                contextUpdatedAt: nextContextUpdatedAt(t, fields),
+                contextHistory: nextHistory(t, fields), // M12: keep the old version
+              }
             : t,
         ),
       );
