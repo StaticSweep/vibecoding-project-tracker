@@ -1,0 +1,91 @@
+import { useEffect, useMemo, useState } from 'react';
+import { STAGES } from '../lib/constants.js';
+import { compareTasks } from '../lib/tasks.js';
+import TaskCard from './TaskCard.jsx';
+
+/**
+ * The four-column Kanban board (M4 data-model, DESIGN.md §4.1).
+ */
+export default function Board({ tasks, today, onMove }) {
+  // After a move, put the focus back on the same control of the moved card.
+  const [focusRequest, setFocusRequest] = useState(null);
+  const [announcement, setAnnouncement] = useState('');
+
+  const columns = useMemo(
+    () =>
+      STAGES.map((stage) => ({
+        ...stage,
+        tasks: tasks.filter((t) => t.status === stage.id).sort(compareTasks),
+      })),
+    [tasks],
+  );
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    const card = document.querySelector(`[data-task-id="${CSS.escape(focusRequest.id)}"]`);
+    const control = card?.querySelector(`[data-control="${focusRequest.control}"]`);
+    (control ?? card)?.focus();
+    setFocusRequest(null);
+  }, [focusRequest]);
+
+  function handleMove(id, status, control) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.status === status) return;
+    onMove(id, status);
+    setFocusRequest({ id, control });
+    const label = STAGES.find((s) => s.id === status)?.label;
+    setAnnouncement(`Moved "${task.title}" to ${label}.`);
+  }
+
+  return (
+    <>
+      <div className="grid h-full min-w-[1088px] grid-cols-4 gap-4">
+        {columns.map((column) => (
+          <Column key={column.id} column={column} today={today} onMove={handleMove} />
+        ))}
+      </div>
+      <p aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
+    </>
+  );
+}
+
+function Column({ column, today, onMove }) {
+  const headingId = `column-${column.id}`;
+  const count = column.tasks.length;
+
+  return (
+    <section
+      aria-labelledby={headingId}
+      className="flex min-h-0 flex-col rounded-lg border border-line-subtle bg-surface-page"
+    >
+      <header className="flex items-center justify-between px-3 pb-2 pt-3">
+        <h2
+          id={headingId}
+          className="font-heading text-sm font-semibold uppercase leading-5 tracking-[0.05em] text-ink"
+        >
+          {column.label}
+          <span className="font-sans font-normal normal-case tracking-normal text-ink-muted">
+            {' · '}
+            {count}
+            <span className="sr-only">{count === 1 ? ' task' : ' tasks'}</span>
+          </span>
+        </h2>
+        {/* TODO M5 crud-modal: "+" button that adds a task to this stage (FR-M5-06). */}
+      </header>
+
+      {count === 0 ? (
+        <div className="mx-3 mb-3 rounded-lg border border-dashed border-line-strong p-4 text-center text-[13px] leading-[18px] text-ink-muted">
+          No tasks here. Add a task or move a task to this stage.
+        </div>
+      ) : (
+        <ul className="flex-1 space-y-2 overflow-y-auto px-3 pb-3">
+          {column.tasks.map((task) => (
+            <TaskCard key={task.id} task={task} today={today} onMove={onMove} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}

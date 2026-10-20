@@ -1,117 +1,124 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { Plus } from 'lucide-react';
+import { STORAGE_KEYS } from './lib/constants.js';
+import { todayISO } from './lib/dates.js';
+import { buildSeedTasks, normaliseTasks } from './lib/tasks.js';
+import { buttonPrimary } from './lib/ui.js';
+import { useLocalStorage } from './hooks/useLocalStorage.js';
+import { ToastProvider, useToast } from './components/Toast.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
+import Board from './components/Board.jsx';
 
 /**
- * Vibecoding Project Tracker — starter scaffold.
+ * Slopify — Vibecoding Project Tracker.
  *
- * This file is intentionally almost empty. The boilerplate (Vite, React,
- * Tailwind) is configured for you, plus a few shared constants and a
- * localStorage helper. Everything visible on screen, you build.
+ * Code map:
+ *   src/lib/constants.js      STAGES, TEAM, TYPES, CONTEXT_TOOLS, storage keys
+ *   src/lib/dates.js          local-date helpers, due state + labels
+ *   src/lib/tasks.js          ids, normalisation, sort order, seed data
+ *   src/lib/ui.js             shared Tailwind class strings (DESIGN.md §4)
+ *   src/hooks/useLocalStorage.js
+ *   src/components/           Board, TaskCard, Toast, ErrorBoundary
  *
- * Where to start (build sequence in Phase 3):
- *   - M4  data-model    : render the four columns and the task cards below.
- *   - M5  crud-modal    : add the "+" button modal and the edit-on-click modal.
- *   - M6  tag-style     : feature vs. bug color coding (uses DESIGN.md §2 colors).
- *   - M7  task-owner    : assignee badge + "Hand off to..." dropdown.
- *   - M8  due-tint      : color cards by due date (uses DESIGN.md §2 due-state colors).
- *   - M9  context       : a curated Context briefing field on the modal.
- *   - M10 copy-prompt   : a "Copy as Prompt Context" button that serializes the task + context.
- *   - M11 anchors       : the Anchor Board above the Kanban.
- *   - M12 secret-sauce  : the one open-ended thing that makes your tracker yours.
- *
- * Search the file for `TODO M<n>` to find the right hook for each milestone.
+ * Milestones still to build — search for `TODO M<n>`:
+ *   M5 crud-modal · M6 tag-style · M7 task-owner · M8 due-tint · M9 context
+ *   M10 copy-prompt · M11 anchors · M12 secret-sauce · M13 pitch-ready
  */
 
-/**
- * @typedef {Object} Task
- * @property {string} id
- * @property {string} title
- * @property {string} description
- * @property {'feature'|'bug'} type
- * @property {'todo'|'in-progress'|'review'|'done'} status
- * @property {string} assignee
- * @property {string|null} dueDate     ISO 'YYYY-MM-DD'
- * @property {string} createdDate      ISO 'YYYY-MM-DD'
- */
-
-// The four columns of the board, in render order.
-// Use these IDs everywhere — do not invent new ones.
-export const STAGES = [
-  { id: 'todo',        label: 'To Do' },
-  { id: 'in-progress', label: 'In Progress' },
-  { id: 'review',      label: 'Review' },
-  { id: 'done',        label: 'Done' },
-];
-
-// Replace these placeholders with the three names from PRD §8 before M4.
-// They become the only valid values for `Task.assignee`.
-export const TEAM = ['Teammate A', 'Teammate B', 'Teammate C'];
-
-/**
- * A tiny localStorage hook — survives reloads, no library needed.
- *
- * Usage:
- *   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', []);
- */
-export function useLocalStorage(key, initialValue) {
-  const [value, setValue] = useState(() => {
-    try {
-      const raw = window.localStorage.getItem(key);
-      return raw != null ? JSON.parse(raw) : initialValue;
-    } catch {
-      return initialValue;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      /* quota or private-mode error — silently ignore for hackathon */
-    }
-  }, [key, value]);
-
-  return [value, setValue];
-}
+// The starter exported these from App.jsx; keep the exports for compatibility.
+export { STAGES, TEAM } from './lib/constants.js';
+export { useLocalStorage } from './hooks/useLocalStorage.js';
 
 export default function App() {
-  // TODO M4 data-model:
-  //   const [tasks, setTasks] = useLocalStorage('vibetracker.tasks', [/* 3-4 seed tasks */]);
-  //
-  // TODO M5 crud-modal:
-  //   const [editing, setEditing] = useState(null);
-  //
+  return (
+    <ErrorBoundary>
+      <ToastProvider>
+        <Tracker />
+      </ToastProvider>
+    </ErrorBoundary>
+  );
+}
+
+function Tracker() {
+  const toast = useToast();
+  const today = todayISO();
+
+  const writeErrorShown = useRef(false);
+  const [tasks, setTasks, tasksNotice] = useLocalStorage(
+    STORAGE_KEYS.tasks,
+    () => buildSeedTasks(todayISO()),
+    {
+      normalise: (raw) => {
+        const result = normaliseTasks(raw, todayISO());
+        return { ok: result.ok, value: result.tasks, dropped: result.dropped };
+      },
+      fallback: [],
+      onWriteError: () => {
+        if (writeErrorShown.current) return;
+        writeErrorShown.current = true;
+        toast({
+          tone: 'error',
+          message:
+            'Slopify cannot save your changes. The browser storage is full. Export your board now.',
+        });
+      },
+    },
+  );
+
+  // DR-INT-01: tell the user once if saved data had to be repaired.
+  const noticeShown = useRef(false);
+  useEffect(() => {
+    if (!tasksNotice || noticeShown.current) return;
+    noticeShown.current = true;
+    toast({
+      tone: 'error',
+      message: 'Slopify cannot read some saved data. A backup copy is in the browser.',
+    });
+  }, [tasksNotice, toast]);
+
+  function moveTask(id, status) {
+    setTasks((list) => list.map((t) => (t.id === id ? { ...t, status } : t)));
+  }
+
   // TODO M11 anchors:
-  //   const [anchors, setAnchors] = useLocalStorage('vibetracker.anchors', [...]);
+  //   const [anchors, setAnchors] = useLocalStorage(STORAGE_KEYS.anchors, DEFAULT_ANCHORS, …);
 
   return (
-    <div className="min-h-screen p-6">
-      <header className="mb-6 flex items-end justify-between">
+    <div className="flex h-screen flex-col bg-surface-page font-sans text-ink">
+      <header className="flex items-end justify-between gap-4 px-6 pb-4 pt-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Vibecoding Project Tracker
+          <h1 className="font-heading text-2xl font-semibold leading-8 text-brand-primary">
+            Slopify
           </h1>
-          <p className="text-sm text-slate-500">
-            {/* Replace this line with your team name from PRD §11. */}
-            Team starter
-          </p>
+          <p className="text-sm leading-5 text-ink-muted">Track the task. Keep the context.</p>
         </div>
+
+        {/* TODO M5 crud-modal: open the create modal. */}
+        <button
+          type="button"
+          aria-disabled="true"
+          aria-describedby="add-task-hint"
+          title="The task editor comes in the next version."
+          onClick={(e) => e.preventDefault()}
+          className={buttonPrimary}
+        >
+          <Plus aria-hidden="true" className="h-4 w-4" />
+          Add task
+        </button>
+        <span id="add-task-hint" className="sr-only">
+          The task editor comes in the next version.
+        </span>
       </header>
 
-      {/* TODO M11 anchors: render the Anchor Board (Presentation / Demo / Report / Documentation) above the board. */}
+      {/* TODO M11 anchors: render the Anchor Board (Presentation / Demo / Report / Documentation) here. */}
 
-      {/*
-        TODO M4 data-model:
-          Render a Kanban board with the four columns from STAGES.
-          Each column should display the tasks whose status matches its id.
-          Pre-populate 3-4 mock tasks so the board isn't empty on first load.
-
-        TODO M5 crud-modal:
-          Add a "+" button that opens a modal with every Task field.
-          Clicking a card should open the same modal in edit mode.
-      */}
-      <main className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400">
-        Build the four-column board here · M4
+      <main className="min-h-0 flex-1 overflow-x-auto px-6">
+        <Board tasks={tasks} today={today} onMove={moveTask} />
       </main>
+
+      <footer className="px-6 py-3 text-[13px] leading-[18px] text-ink-muted">
+        Slopify keeps your data in this browser only. Export the board to share it or to keep a copy.
+      </footer>
     </div>
   );
 }
