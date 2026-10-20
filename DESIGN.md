@@ -24,10 +24,11 @@ This document uses **ASD-STE100 Simplified Technical English (STE)**. Use the sa
 
 ## 1. Mood / vibe
 
-**Mood:** Slopify is calm, clear and fast. The tool stays quiet, and the work of the team stays in front.
+**Mood:** Slopify is calm, clear and fast. The tool stays quiet, and the work of the team stays in front. The surfaces look like frosted glass on a soft colour background, as in iOS.
 
 **References:**
 
+- **iOS and iPadOS** — Frosted glass panels, large corner radius, pill buttons, soft shadows.
 - **Linear** — Dense, quiet lists. Colour shows only status and priority.
 - **Things 3** — Calm white space. Soft surfaces. Each screen has one clear primary action.
 - **GitHub Projects** — Clear columns and small, readable badges. The team can see who owns each item.
@@ -35,7 +36,7 @@ This document uses **ASD-STE100 Simplified Technical English (STE)**. Use the sa
 **Anti-references (do not look like these):**
 
 - **Jira** — Too many fields, too many colours, too many menus on one card.
-- Dashboards with gradients, glow effects and default Tailwind blue.
+- Dark dashboards with neon glow, strong gradients behind text and default Tailwind blue.
 
 **Design principles.** These principles come from PRD §14.1.
 
@@ -145,6 +146,38 @@ Do this check after each change to §2. Use a WCAG contrast checker.
 3. Check `text-muted` on each tint. The minimum is 4.5:1.
 4. Look at the board in a colour-blindness simulator (Chrome DevTools → Rendering → *Emulate vision deficiencies*).
 5. Make sure that each state is clear from its label and icon alone.
+6. Check `text-muted` on the thinnest glass (60 % white) over the strongest backdrop colour. The minimum is 4.5:1 (§2.6).
+
+### 2.6 Glass surfaces (iOS style)
+
+The page has a soft colour background. Surfaces on top are white glass: part transparent, with a blur behind them.
+
+**Backdrop.** Three large, blurred colour fields sit behind all content. They are decoration only.
+
+| Field | Hex | Opacity | Position |
+|---|---|---|---|
+| Teal | `#9ED8D3` | 85 % | Top left |
+| Lavender | `#B9BCF6` | 85 % | Right |
+| Pink | `#F0BFE3` | 80 % | Bottom |
+
+**Glass levels.** Use only these four levels. Text never sits directly on the backdrop.
+
+| Level | Class in `src/lib/ui.js` | White | Use |
+|---|---|---|---|
+| Panel | `glassPanel` | 60 % | Header bar, Anchor Board, columns, footer note |
+| Card | `glassCard` | 85 % | Task cards (no due date), filled anchor slots |
+| Sheet | `glassSheet` | 95 % | Modals and dialogs |
+| Field | `inputBase` | 100 % | Inputs, selects, textareas (always solid) |
+
+Each glass level has a 1 px white border at 70–80 % opacity, a soft wide shadow (`shadow-glass`, `shadow-glass-sm`, `shadow-glass-lg`) and a background blur of 24 px.
+
+**Rules:**
+
+- Due tints (§2.3) on cards are 90 % opaque, so the tint stays clear.
+- The modal backdrop is `text-primary` at 30 % with a small blur.
+- Toasts are dark glass: `text-primary` at 85 % with a blur.
+- **Contrast.** The worst case is `text-muted` on panel glass over lavender: 4.93:1. Do not make the backdrop stronger or the glass thinner without a new check (§2.5).
+- **Reduce transparency.** When the user sets "reduce transparency" in the operating system, all glass becomes solid `surface-card` and the blur stops (`reduce-transparency:` variant in `tailwind.config.js`).
 
 ---
 
@@ -193,7 +226,7 @@ All fonts come from Google Fonts. These fonts help readers with low vision and r
 ### 4.1 Layout
 
 - The minimum viewport is 1280 × 720 px. At 1024 px, the board scrolls horizontally (NFR-UI-06). Mobile is out of scope.
-- The page has 24 px of padding.
+- The page has 16 px of padding. The header bar, the Anchor Board and the columns are separate glass panels with 12–16 px gaps.
 - The order from top to bottom is: header, Anchor Board, board, footer.
 - The Anchor Board has a maximum height of 120 px. The board stays above the fold (FR-M11-08).
 - The board has four columns of equal width, with a 16 px gap. Each column has a minimum width of 260 px.
@@ -204,9 +237,9 @@ All fonts come from Google Fonts. These fonts help readers with low vision and r
 | Item | Rule |
 |---|---|
 | Spacing | Use a 4 px scale: 4, 8, 12, 16, 24, 32 px. |
-| Corner radius | Badges and avatars: full. Buttons and inputs: 6 px (`rounded-md`). Cards and anchor slots: 8 px (`rounded-lg`). Modal: 12 px (`rounded-xl`). |
-| Borders | Cards: 1 px `line-subtle`. Inputs: 1 px `line-strong`. |
-| Shadows | Cards have no shadow at rest. Cards get `shadow-sm` on hover and focus. The modal gets `shadow-xl`. |
+| Corner radius | Badges, avatars, buttons, selects and segmented controls: full (pill). Inputs and textareas: 12 px (`rounded-xl`). Cards and anchor slots: 16 px (`rounded-2xl`). Columns, header bar, Anchor Board and modals: 24 px (`rounded-3xl`). |
+| Borders | Glass: 1 px white at 70–80 % (§2.6). Inputs, selects and secondary buttons: 1 px `line-strong` (3:1). |
+| Shadows | Cards: `shadow-glass-sm`, `shadow-glass` on hover and focus. Panels: `shadow-glass`. Modals and toasts: `shadow-glass-lg`. |
 
 ### 4.3 Card anatomy
 
@@ -244,15 +277,16 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 | Type | Look | Use |
 |---|---|---|
 | Primary | Solid `brand-primary`, white text; `brand-primary-hover` on hover | One per view: "Add task", "Create task", "Save changes" |
-| Secondary | `surface-card`, 1 px `line-strong` border, `text-primary`; `brand-accent` on hover | "Cancel", "Export", "Insert template" |
-| Ghost | No border, `text-muted`; `brand-accent` on hover | Icon buttons on cards, the close button of the modal |
+| Secondary | White at 80 %, 1 px `line-strong` border, `text-primary`; `brand-accent` on hover | "Cancel", "Export", "Insert template" |
+| Ghost | Round, no border, `text-muted`; white at 80 % on hover | Icon buttons on cards, the close button of the modal |
 | Destructive | Outline: 1 px `line-strong`, `text-primary`, Lucide `trash-2` icon | "Delete task" in the modal. It is not red (PRD §14.6 #2). |
 | Danger | Solid `danger`, white text | The confirm button in the delete dialog only |
 
 **Rules:**
 
 - Buttons have no gradients.
-- Buttons have a minimum height of 32 px. Icon buttons are a minimum of 24 × 24 px (NFR-USE-12).
+- Buttons are pills with a height of 36 px. Icon buttons are round and 32 × 32 px (NFR-USE-12).
+- The segmented control is a pill track. The selected option is a solid colour pill, not a white iOS thumb, so the selected state keeps 3:1 contrast.
 - Each button has these states: default, hover, focus, active, disabled (NFR-UI-07).
 - A disabled button has 50 % opacity. It has a tooltip or helper text that tells why it is disabled.
 - Each icon-only button has an `aria-label` (NFR-A11Y-06).
@@ -260,7 +294,7 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 ### 4.7 Form fields
 
 - Each field has a visible label above the field. Do not use a placeholder as the label.
-- Inputs have a 1 px `line-strong` border, `surface-card` background and 16 px text.
+- Inputs have a 1 px `line-strong` border, a solid white background, a 12 px corner radius and 16 px text. Inputs are never transparent.
 - An invalid field gets a 2 px `due-overdue` border, an error icon and an error message below the field. The field gets `aria-invalid` and `aria-describedby` (NFR-A11Y-07).
 - Helper text is `text-muted`, 13 px, below the field.
 - The type control is a segmented control. Each part shows the type icon, the label and the type colour (FR-M6-03).
@@ -268,8 +302,8 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 ### 4.8 Modal
 
-- The modal is in the centre of the screen. Its maximum width is 640 px.
-- The backdrop is `text-primary` at 50 % opacity.
+- The modal is a glass sheet (§2.6) in the centre of the screen. Its maximum width is 640 px.
+- The backdrop is `text-primary` at 30 % opacity with a small blur.
 - The modal heading is "New task" or "Edit task" (FR-M5-07).
 - The action bar is at the bottom and stays visible. "Delete task" is on the left. "Cancel" and the primary button are on the right (FR-M5-12).
 - If the modal is taller than the viewport, the body of the modal scrolls (FR-M5-19).
@@ -283,13 +317,13 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 ### 4.10 Toasts
 
 - Toasts show at the bottom right of the screen. A maximum of 3 toasts show at the same time.
-- A toast has `text-primary` as its background and white text. A toast for an error has an alert icon in `due-overdue-bg`. The strong `due-overdue` colour has too little contrast on the dark toast.
+- A toast is dark glass: `text-primary` at 85 % with a blur, white text and a 16 px corner radius. A toast for an error has an alert icon in `due-overdue-bg`. The strong `due-overdue` colour has too little contrast on the dark toast.
 - Toasts fade in and fade out in 200 ms. They close after 4 seconds. Each toast has a close button.
 - Toasts use an `aria-live="polite"` region (FR-APP-05).
 
 ### 4.11 Empty states
 
-- An empty state has a 1 px dashed `line-strong` border, `text-muted` text and one next action.
+- An empty state has a 1 px dashed `line-strong` border, white at 50 %, `text-muted` text and one next action.
 - Empty states are never sad. They tell the user what to do next.
 
 ### 4.12 Focus

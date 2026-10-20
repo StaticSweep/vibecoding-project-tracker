@@ -28,7 +28,7 @@ export default function PromptHistory({ task, draft, today, onRestore }) {
   if (versions.length === 0) return null;
 
   return (
-    <details className="group rounded-md border border-line-subtle" open={versions.length > 1}>
+    <details className="group overflow-hidden rounded-2xl border border-line-subtle bg-white/60" open={versions.length > 1}>
       <summary className="flex h-9 cursor-pointer items-center gap-2 px-3 text-sm font-semibold text-ink hover:bg-brand-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
         Prompt history
         <span className="font-normal text-ink-muted">
@@ -65,7 +65,7 @@ export default function PromptHistory({ task, draft, today, onRestore }) {
                     onClick={() => setOpen(expanded ? null : i)}
                     aria-expanded={expanded}
                     aria-controls={panelId}
-                    className={`h-7 rounded-md px-2 text-sm font-semibold text-brand-primary hover:bg-brand-accent ${focusRing}`}
+                    className={`h-7 rounded-full px-3 text-sm font-semibold text-brand-primary hover:bg-brand-accent ${focusRing}`}
                   >
                     {expanded ? 'Hide' : 'Show'}
                   </button>
@@ -94,7 +94,7 @@ export default function PromptHistory({ task, draft, today, onRestore }) {
               {expanded && (
                 <pre
                   id={panelId}
-                  className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-md bg-surface-page px-3 py-2 font-mono text-[13px] leading-5 text-ink"
+                  className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-surface-page px-3 py-2 font-mono text-[13px] leading-5 text-ink"
                 >
                   {v.context}
                 </pre>

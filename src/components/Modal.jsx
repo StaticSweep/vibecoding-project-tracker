@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { glassSheet } from '../lib/ui.js';
 
 // Nested modals (e.g. a confirm dialog over the task modal) share one scroll lock.
 let scrollLocks = 0;
@@ -81,7 +82,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/50 p-6"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/30 p-6 backdrop-blur-sm reduce-transparency:bg-ink/50 reduce-transparency:backdrop-blur-none"
       onMouseDown={(e) => {
         if (e.target !== e.currentTarget) return;
         // Stop the browser from moving focus to <body> after we restore it.
@@ -97,7 +98,7 @@ export default function Modal({
         aria-describedby={describedBy}
         tabIndex={-1}
         onKeyDown={handleKeyDown}
-        className={`flex max-h-[calc(100vh-3rem)] w-full flex-col rounded-xl bg-surface-card text-ink shadow-xl focus:outline-none ${className}`}
+        className={`flex max-h-[calc(100vh-3rem)] w-full flex-col overflow-hidden rounded-3xl text-ink focus:outline-none ${glassSheet} ${className}`}
       >
         {children}
       </div>

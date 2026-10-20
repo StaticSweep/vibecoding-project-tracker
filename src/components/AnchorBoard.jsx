@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Check, Copy, ExternalLink, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { hostOf, normaliseUrl } from '../lib/anchors.js';
 import { copyText } from '../lib/clipboard.js';
-import { focusRing, iconButton, inputBase } from '../lib/ui.js';
+import { focusRing, glassCard, glassPanel, iconButton, inputBase } from '../lib/ui.js';
 import { useToast } from './Toast.jsx';
 
 /**
@@ -15,7 +15,7 @@ export default function AnchorBoard({ anchors, onChange }) {
   const headingId = useId();
 
   return (
-    <section aria-labelledby={headingId} className="px-6 pb-4">
+    <section aria-labelledby={headingId} className={`mx-4 mb-3 rounded-3xl px-4 pb-3 pt-2.5 ${glassPanel}`}>
       <div className="mb-2 flex items-baseline gap-2">
         <h2
           id={headingId}
@@ -87,13 +87,13 @@ function AnchorSlot({ anchor, onChange }) {
     toast(ok ? { message: 'Link copied.' } : { tone: 'error', message: 'Slopify cannot copy the link.' });
   }
 
-  const box = 'flex h-14 items-center gap-2 rounded-lg px-3';
+  const box = 'flex h-14 items-center gap-2 rounded-2xl px-3';
 
   return (
     <li ref={slotRef}>
       {editing ? (
         <div>
-          <div className={`${box} border border-brand-primary bg-surface-card`}>
+          <div className={`${box} border border-brand-primary bg-white/90 shadow-glass-sm`}>
             <label htmlFor={inputId} className="sr-only">
               {anchor.label} link
             </label>
@@ -144,7 +144,7 @@ function AnchorSlot({ anchor, onChange }) {
         </div>
       ) : anchor.url ? (
         // Filled slot: the link opens; a separate pencil edits (FR-M11-06).
-        <div className={`${box} border border-line-subtle bg-surface-card`}>
+        <div className={`${box} ${glassCard}`}>
           <a
             href={anchor.url}
             target="_blank"
@@ -175,7 +175,7 @@ function AnchorSlot({ anchor, onChange }) {
           data-slot-focus
           onClick={startEdit}
           aria-label={`Add link for ${anchor.label}`}
-          className={`${box} w-full border border-dashed border-line-strong text-left text-ink-muted transition-colors duration-150 hover:bg-brand-accent hover:text-brand-primary motion-reduce:transition-none ${focusRing}`}
+          className={`${box} w-full border border-dashed border-line-strong bg-white/50 text-left text-ink-muted transition-colors duration-150 hover:bg-white/90 hover:text-brand-primary motion-reduce:transition-none reduce-transparency:bg-surface-card ${focusRing}`}
         >
           <Plus aria-hidden="true" className="h-4 w-4 shrink-0" />
           <span className="min-w-0">

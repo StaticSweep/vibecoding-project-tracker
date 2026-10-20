@@ -38,10 +38,10 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
         data-task-id={task.id}
         tabIndex={-1}
         aria-labelledby={titleId}
-        className={`relative rounded-lg border border-line-subtle ${due.card} py-3 pl-4 pr-3 transition-shadow duration-150 hover:shadow-sm focus-within:shadow-sm motion-reduce:transition-none ${focusRing}`}
+        className={`relative rounded-2xl border border-white/80 ${due.card} py-3 pl-5 pr-3 shadow-glass-sm backdrop-blur-xl transition-shadow duration-150 hover:shadow-glass focus-within:shadow-glass motion-reduce:transition-none reduce-transparency:backdrop-blur-none ${focusRing}`}
       >
         {/* Type stripe (FR-M6-01, DESIGN.md §2.2) — decoration; the badge carries the text. */}
-        <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1 rounded-l-[7px] ${stripe}`} />
+        <span aria-hidden="true" className={`absolute bottom-3 left-2 top-3 w-1 rounded-full ${stripe}`} />
         <div className="flex items-center justify-between gap-2">
           <TypeBadge type={task.type} />
           {/* Due label: colour + icon + text, never colour alone (FR-M8-02) */}
@@ -72,7 +72,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             data-control="open"
             onClick={() => onOpen(task.id)}
             title={task.title}
-            className="block w-full cursor-pointer text-left after:absolute after:inset-0 after:rounded-lg after:content-[''] focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand-primary"
+            className="block w-full cursor-pointer text-left after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand-primary"
           >
             <span className="line-clamp-2 break-words">{task.title}</span>
           </button>
@@ -95,7 +95,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
               value={task.assignee}
               onChange={(e) => onHandOff(task.id, e.target.value)}
               title="Hand off to…"
-              className={`h-7 max-w-[9rem] truncate rounded-md border border-transparent bg-transparent pl-1 pr-5 text-sm text-ink hover:border-line-strong hover:bg-surface-card ${focusRing}`}
+              className={`h-7 max-w-[9rem] truncate rounded-full border border-transparent bg-transparent pl-1.5 pr-5 text-sm text-ink hover:border-line-strong hover:bg-white/80 ${focusRing}`}
             >
               {!known && <option value={task.assignee}>Unassigned</option>}
               {/* Plain names keep the select as narrow as the longest name. */}
@@ -154,7 +154,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             data-control="stage"
             value={task.status}
             onChange={(e) => onMove(task.id, e.target.value, 'stage')}
-            className={`h-8 min-w-0 flex-1 rounded-md border border-line-strong bg-surface-card px-2 text-sm text-ink ${focusRing}`}
+            className={`h-8 min-w-0 flex-1 rounded-full border border-line-strong bg-white/80 px-3 text-sm text-ink ${focusRing}`}
           >
             {STAGES.map((s) => (
               <option key={s.id} value={s.id}>

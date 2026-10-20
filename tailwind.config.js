@@ -62,7 +62,21 @@ export default {
           'monospace',
         ],
       },
+
+      // iOS-style glass (DESIGN.md §2.6). Shadows are soft and wide; blur
+      // comes from Tailwind's backdrop-blur utilities.
+      boxShadow: {
+        glass: '0 8px 32px -8px rgba(30, 36, 48, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+        'glass-sm': '0 2px 10px -2px rgba(30, 36, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7)',
+        'glass-lg': '0 24px 64px -12px rgba(30, 36, 48, 0.32)',
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    // `reduce-transparency:` — solid surfaces for users who ask for less
+    // transparency in their OS settings (accessibility).
+    ({ addVariant }) => {
+      addVariant('reduce-transparency', '@media (prefers-reduced-transparency: reduce)');
+    },
+  ],
 };

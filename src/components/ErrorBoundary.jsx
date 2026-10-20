@@ -20,7 +20,7 @@ export default class ErrorBoundary extends Component {
 
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface-page p-6 font-sans text-ink">
-        <div role="alert" className="max-w-md rounded-xl border border-line-subtle bg-surface-card p-6 shadow-xl">
+        <div role="alert" className="max-w-md rounded-3xl border border-line-subtle bg-surface-card p-6 shadow-glass-lg">
           <h1 className="font-heading text-xl font-semibold leading-7">Slopify has a problem.</h1>
           <p className="mt-2 text-base leading-6 text-ink-muted">
             Reload the page. If the problem continues, export your data.

@@ -401,7 +401,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
               )}
 
               {/* FR-M10-09: preview of the copied text */}
-              <details className="group rounded-md border border-line-subtle">
+              <details className="group overflow-hidden rounded-2xl border border-line-subtle bg-white/60">
                 <summary className="flex h-9 cursor-pointer items-center px-3 text-sm font-semibold text-ink hover:bg-brand-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
                   Preview the prompt
                 </summary>

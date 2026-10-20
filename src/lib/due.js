@@ -7,9 +7,9 @@ import { Calendar, CircleCheck, Clock, TriangleAlert } from 'lucide-react';
  * Full class names are written out so Tailwind can find them.
  */
 export const DUE_STYLES = {
-  done:    { card: 'bg-due-neutral-bg', label: 'text-due-neutral-fg', icon: CircleCheck },
-  overdue: { card: 'bg-due-overdue-bg', label: 'text-due-overdue-fg', icon: TriangleAlert },
-  warning: { card: 'bg-due-warning-bg', label: 'text-due-warning-fg', icon: Clock },
-  safe:    { card: 'bg-due-safe-bg',    label: 'text-due-safe-fg',    icon: Calendar },
-  none:    { card: 'bg-surface-card',   label: 'text-ink-muted',      icon: null },
+  done:    { card: 'bg-due-neutral-bg/90', label: 'text-due-neutral-fg', icon: CircleCheck },
+  overdue: { card: 'bg-due-overdue-bg/90', label: 'text-due-overdue-fg', icon: TriangleAlert },
+  warning: { card: 'bg-due-warning-bg/90', label: 'text-due-warning-fg', icon: Clock },
+  safe:    { card: 'bg-due-safe-bg/90', label: 'text-due-safe-fg',    icon: Calendar },
+  none:    { card: 'bg-white/85',      label: 'text-ink-muted',      icon: null },
 };

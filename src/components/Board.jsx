@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { STAGES } from '../lib/constants.js';
 import { compareTasks } from '../lib/tasks.js';
-import { iconButton } from '../lib/ui.js';
+import { glassPanel, iconButton } from '../lib/ui.js';
 import TaskCard from './TaskCard.jsx';
 
 /**
@@ -81,9 +81,9 @@ function Column({ column, today, onMove, onOpen, onAdd, onHandOff }) {
   return (
     <section
       aria-labelledby={headingId}
-      className="flex min-h-0 flex-col rounded-lg border border-line-subtle bg-surface-page"
+      className={`flex min-h-0 flex-col rounded-3xl ${glassPanel}`}
     >
-      <header className="flex items-center justify-between px-3 pb-2 pt-2">
+      <header className="flex items-center justify-between px-4 pb-2 pt-3">
         <h2
           id={headingId}
           className="font-heading text-sm font-semibold uppercase leading-5 tracking-[0.05em] text-ink"
@@ -108,13 +108,13 @@ function Column({ column, today, onMove, onOpen, onAdd, onHandOff }) {
       </header>
 
       {count === 0 ? (
-        <div className="mx-3 mb-3 rounded-lg border border-dashed border-line-strong p-4 text-center text-[13px] leading-[18px] text-ink-muted">
+        <div className="mx-3 mb-3 rounded-2xl border border-dashed border-line-strong bg-white/50 p-4 text-center text-[13px] leading-[18px] text-ink-muted reduce-transparency:bg-surface-card">
           {filtered
             ? 'No tasks agree with this filter. Clear the filter to see all tasks.'
             : 'No tasks here. Add a task or move a task to this stage.'}
         </div>
       ) : (
-        <ul className="flex-1 space-y-2 overflow-y-auto px-3 pb-3">
+        <ul className="flex-1 space-y-2.5 overflow-y-auto px-3 pb-3 pt-0.5">
           {column.tasks.map((task) => (
             <TaskCard
               key={task.id}

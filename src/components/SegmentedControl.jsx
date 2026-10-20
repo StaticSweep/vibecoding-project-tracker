@@ -17,7 +17,13 @@ export default function SegmentedControl({ legend, hideLegend = false, options, 
       <legend className={hideLegend ? 'sr-only' : 'block text-sm font-semibold leading-5 text-ink'}>
         {legend}
       </legend>
-      <div className={`${hideLegend ? '' : 'mt-1 '}inline-flex rounded-md border border-line-strong bg-surface-card p-0.5`}>
+      {/*
+        iOS pill track. The chosen option is a solid colour pill (not iOS's
+        white thumb) so the selected state keeps ≥ 3:1 contrast (NFR-A11Y-01).
+      */}
+      <div
+        className={`${hideLegend ? '' : 'mt-1 '}inline-flex gap-0.5 rounded-full border border-line-strong bg-white/75 p-0.5 backdrop-blur-xl reduce-transparency:bg-surface-card`}
+      >
         {options.map((option) => {
           const Icon = option.icon;
           const checked = option.value === value;
@@ -32,8 +38,8 @@ export default function SegmentedControl({ legend, hideLegend = false, options, 
                 className="peer sr-only"
               />
               <span
-                className={`inline-flex ${height} cursor-pointer items-center gap-1.5 rounded px-3 text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none peer-focus-visible:ring-2 peer-focus-visible:ring-brand-primary peer-focus-visible:ring-offset-2 ${
-                  checked ? option.selectedClass : 'text-ink hover:bg-brand-accent'
+                className={`inline-flex ${height} cursor-pointer items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none peer-focus-visible:ring-2 peer-focus-visible:ring-brand-primary peer-focus-visible:ring-offset-2 ${
+                  checked ? `${option.selectedClass} shadow-glass-sm` : 'text-ink hover:bg-white'
                 }`}
               >
                 {Icon && (

@@ -7,7 +7,7 @@ import { buildSeedTasks, createId, isKnownAssignee, normaliseTasks } from './lib
 import { nextContextUpdatedAt } from './lib/context.js';
 import { nextHistory } from './lib/history.js';
 import { migrateTasks, readSchemaVersion, writeSchemaVersion } from './lib/schema.js';
-import { buttonPrimary, focusRing } from './lib/ui.js';
+import { buttonPrimary, focusRing, glassPanel } from './lib/ui.js';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
@@ -219,10 +219,13 @@ function Tracker() {
   const overdueCount = tasks.filter((t) => getDueState(t, today) === 'overdue').length;
 
   return (
-    <div className="flex h-screen flex-col bg-surface-page font-sans text-ink">
-      <header className="flex items-end justify-between gap-4 px-6 pb-4 pt-6">
+    <div className="relative isolate flex h-screen flex-col overflow-hidden bg-surface-page font-sans text-ink">
+      <GlassBackdrop />
+
+      {/* Floating glass navigation bar (DESIGN.md §2.6) */}
+      <header className={`mx-4 mb-3 mt-4 flex items-center justify-between gap-4 rounded-3xl px-5 py-3 ${glassPanel}`}>
         <div>
-          <h1 className="font-heading text-2xl font-semibold leading-8 text-brand-primary">
+          <h1 className="font-heading text-[28px] font-semibold leading-8 tracking-tight text-brand-primary">
             Slopify
           </h1>
           <p className="text-sm leading-5 text-ink-muted">Track the task. Keep the context.</p>
@@ -244,9 +247,9 @@ function Tracker() {
               id="owner-filter"
               value={ownerFilter}
               onChange={(e) => setOwnerFilter(e.target.value)}
-              className={`h-8 rounded-md border px-2 text-sm ${
+              className={`h-8 rounded-full border px-3 text-sm ${
                 ownerFilter === 'all'
-                  ? 'border-line-strong bg-surface-card text-ink'
+                  ? 'border-line-strong bg-white/75 text-ink'
                   : 'border-brand-primary bg-brand-accent font-semibold text-brand-primary'
               } ${focusRing}`}
             >
@@ -289,11 +292,11 @@ function Tracker() {
         </div>
       </header>
 
-      <div className="overflow-x-auto">
+      <div className="shrink-0 overflow-x-auto">
         <AnchorBoard anchors={anchors} onChange={setAnchorUrl} />
       </div>
 
-      <main className="min-h-0 flex-1 overflow-x-auto px-6">
+      <main className="min-h-0 flex-1 overflow-x-auto px-4">
         <Board
           tasks={tasks}
           today={today}
@@ -306,8 +309,10 @@ function Tracker() {
         />
       </main>
 
-      <footer className="px-6 py-3 text-[13px] leading-[18px] text-ink-muted">
-        Slopify keeps your data in this browser only. Export the board to share it or to keep a copy.
+      <footer className="px-4 py-3">
+        <p className={`inline-block rounded-full px-4 py-1.5 text-[13px] leading-[18px] text-ink-muted ${glassPanel}`}>
+          Slopify keeps your data in this browser only. Export the board to share it or to keep a copy.
+        </p>
       </footer>
 
       {editor && (editor.mode === 'create' || editingTask) && (
@@ -323,6 +328,22 @@ function Tracker() {
           returnFocus={returnFocus}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Soft, pale colour fields behind the glass (DESIGN.md §2.6) — iOS-style
+ * wallpaper. Decorative only. The colours are pale so that text on the glass
+ * keeps WCAG AA contrast wherever it sits.
+ */
+function GlassBackdrop() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      {/* Worst case on the thinnest glass (60 % white): text-muted 4.93:1. */}
+      <div className="absolute -left-32 -top-40 h-[38rem] w-[38rem] rounded-full bg-[#9ED8D3] opacity-85 blur-3xl" />
+      <div className="absolute -right-24 top-10 h-[34rem] w-[34rem] rounded-full bg-[#B9BCF6] opacity-85 blur-3xl" />
+      <div className="absolute -bottom-56 left-[30%] h-[36rem] w-[36rem] rounded-full bg-[#F0BFE3] opacity-80 blur-3xl" />
     </div>
   );
 }

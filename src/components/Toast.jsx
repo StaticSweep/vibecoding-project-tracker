@@ -77,7 +77,7 @@ function ToastItem({ toast, onDismiss }) {
 
   return (
     <div
-      className={`pointer-events-auto flex items-start gap-3 rounded-md bg-ink px-4 py-3 text-sm text-white shadow-lg transition-opacity duration-200 motion-reduce:transition-none ${
+      className={`pointer-events-auto flex items-start gap-3 rounded-2xl bg-ink/85 px-4 py-3 text-sm text-white shadow-glass-lg backdrop-blur-xl reduce-transparency:bg-ink transition-opacity duration-200 motion-reduce:transition-none ${
         shown ? 'opacity-100' : 'opacity-0'
       }`}
     >
