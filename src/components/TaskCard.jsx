@@ -1,28 +1,29 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { STAGES } from '../lib/constants.js';
+import { STAGES, TEAM } from '../lib/constants.js';
 import { formatDueLabel, formatLongDate } from '../lib/dates.js';
 import { isKnownAssignee } from '../lib/tasks.js';
 import { TYPE_STYLES } from '../lib/types.js';
 import { focusRing, iconButton } from '../lib/ui.js';
 import TypeBadge from './TypeBadge.jsx';
+import Avatar from './Avatar.jsx';
 
 /**
  * One task on the board (DESIGN.md §4.3 / §4.4).
  *
  * M4 shows the data as plain text. Later milestones add:
- *   M7 avatar + hand-off
  *   M8 due tint · M9 context indicator · M10 copy button
  */
-export default function TaskCard({ task, today, onMove, onOpen }) {
+export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
   const stageIndex = STAGES.findIndex((s) => s.id === task.status);
   const prev = STAGES[stageIndex - 1];
   const next = STAGES[stageIndex + 1];
 
   const stripe = (TYPE_STYLES[task.type] ?? TYPE_STYLES.feature).stripe;
-  const assignee = isKnownAssignee(task.assignee) ? task.assignee : 'Unassigned';
+  const known = isKnownAssignee(task.assignee);
   const dueLabel = formatDueLabel(task, today);
   const titleId = `task-title-${task.id}`;
   const stageSelectId = `task-stage-${task.id}`;
+  const ownerSelectId = `task-owner-${task.id}`;
 
   return (
     <li>
@@ -52,9 +53,37 @@ export default function TaskCard({ task, today, onMove, onOpen }) {
           </button>
         </h3>
 
-        {/* TODO M7 task-owner: avatar + "Hand off to…". TODO M8 due-tint: tint + icon. */}
+        {/* TODO M8 due-tint: tint + icon. */}
         <div className="mt-2 flex items-center justify-between gap-2 text-sm text-ink-muted">
-          <span className="truncate">{assignee}</span>
+          {/*
+            Owner + "Hand off to…" (FR-M7-01/02). The select shows the owner's
+            name, so the name is always visible next to the avatar.
+          */}
+          <div className="relative z-10 flex min-w-0 items-center gap-1.5">
+            <Avatar name={task.assignee} />
+            <label htmlFor={ownerSelectId} className="sr-only">
+              Hand off to…
+            </label>
+            <select
+              id={ownerSelectId}
+              data-control="owner"
+              value={task.assignee}
+              onChange={(e) => onHandOff(task.id, e.target.value)}
+              title="Hand off to…"
+              className={`h-7 min-w-0 max-w-[9rem] truncate rounded-md border border-transparent bg-transparent pl-1 pr-6 text-sm text-ink hover:border-line-strong hover:bg-surface-card ${focusRing}`}
+            >
+              {!known && (
+                <option value={task.assignee}>
+                  Unassigned
+                </option>
+              )}
+              {TEAM.map((name) => (
+                <option key={name} value={name}>
+                  {name === task.assignee ? name : `Hand off to ${name}`}
+                </option>
+              ))}
+            </select>
+          </div>
           {dueLabel && (
             <span
               className="shrink-0"

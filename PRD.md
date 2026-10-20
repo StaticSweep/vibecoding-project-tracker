@@ -262,14 +262,14 @@ These principles are the tie-breaker whenever a requirement below is ambiguous.
 
 #### M7 `task-owner` — Assignee badge & handoff
 
-- [ ] **FR-M7-01** · Must — Every card shows an assignee badge: initials avatar plus the name (or the name in the badge's accessible label and tooltip). Each teammate has a consistent, distinct badge.
-- [ ] **FR-M7-02** · Must — A "Hand off to…" dropdown on the card lists the other teammates; picking one reassigns the task immediately without opening the modal. The modal's assignee field offers the same choice.
-- [ ] **FR-M7-03** · Must — A successful handoff shows a toast with the DESIGN.md §5 handoff copy, including the new owner's name.
-- [ ] **FR-M7-04** · Must — Interacting with the handoff dropdown (or any other control on a card) does **not** also open the edit modal.
-- [ ] **FR-M7-05** · Must — A task whose assignee is not in `TEAM` (e.g. after a name change) shows as "Unassigned" and can be reassigned; it never crashes the board.
-- [ ] **FR-M7-06** · Should — Teammate badge colours do not collide with type or due-state colours; initials make the badge identifiable without colour.
-- [ ] **FR-M7-07** · Could — The handoff toast offers **Undo**.
-- [ ] **FR-M7-08** · Could — A header filter shows one teammate's tasks ("My tasks").
+- [x] **FR-M7-01** · Must — Every card shows an assignee badge: initials avatar plus the name (or the name in the badge's accessible label and tooltip). Each teammate has a consistent, distinct badge.
+- [x] **FR-M7-02** · Must — A "Hand off to…" dropdown on the card lists the other teammates; picking one reassigns the task immediately without opening the modal. The modal's assignee field offers the same choice.
+- [x] **FR-M7-03** · Must — A successful handoff shows a toast with the DESIGN.md §5 handoff copy, including the new owner's name.
+- [x] **FR-M7-04** · Must — Interacting with the handoff dropdown (or any other control on a card) does **not** also open the edit modal.
+- [x] **FR-M7-05** · Must — A task whose assignee is not in `TEAM` (e.g. after a name change) shows as "Unassigned" and can be reassigned; it never crashes the board.
+- [x] **FR-M7-06** · Should — Teammate badge colours do not collide with type or due-state colours; initials make the badge identifiable without colour.
+- [x] **FR-M7-07** · Could — The handoff toast offers **Undo**.
+- [x] **FR-M7-08** · Could — A header filter shows one teammate's tasks ("My tasks").
 
 #### M8 `due-tint` — Due-date colour states
 

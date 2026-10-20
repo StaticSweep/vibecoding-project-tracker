@@ -9,10 +9,11 @@ import TaskCard from './TaskCard.jsx';
  * The four-column Kanban board (M4 data-model, DESIGN.md §4.1).
  */
 /**
- * `typeFilter` is 'all' or a type id (FR-M6-05). Hidden tasks still count
+ * `typeFilter` is 'all' or a type id (FR-M6-05); `ownerFilter` is 'all' or a
+ * teammate name (FR-M7-08). Hidden tasks still count
  * toward the column total, so the count reads "1 of 3" while a filter is on.
  */
-export default function Board({ tasks, today, onMove, onOpen, onAdd, typeFilter = 'all' }) {
+export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, typeFilter = 'all', ownerFilter = 'all' }) {
   // After a move, put the focus back on the same control of the moved card.
   const [focusRequest, setFocusRequest] = useState(null);
   const [announcement, setAnnouncement] = useState('');
@@ -24,10 +25,13 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd, typeFilter 
         return {
           ...stage,
           total: all.length,
-          tasks: all.filter((t) => typeFilter === 'all' || t.type === typeFilter).sort(compareTasks),
+          tasks: all
+            .filter((t) => typeFilter === 'all' || t.type === typeFilter)
+            .filter((t) => ownerFilter === 'all' || t.assignee === ownerFilter)
+            .sort(compareTasks),
         };
       }),
-    [tasks, typeFilter],
+    [tasks, typeFilter, ownerFilter],
   );
 
   useEffect(() => {
@@ -58,6 +62,7 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd, typeFilter 
             onMove={handleMove}
             onOpen={onOpen}
             onAdd={onAdd}
+            onHandOff={onHandOff}
           />
         ))}
       </div>
@@ -68,7 +73,7 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd, typeFilter 
   );
 }
 
-function Column({ column, today, onMove, onOpen, onAdd }) {
+function Column({ column, today, onMove, onOpen, onAdd, onHandOff }) {
   const headingId = `column-${column.id}`;
   const count = column.tasks.length;
   const filtered = count < column.total;
@@ -111,7 +116,14 @@ function Column({ column, today, onMove, onOpen, onAdd }) {
       ) : (
         <ul className="flex-1 space-y-2 overflow-y-auto px-3 pb-3">
           {column.tasks.map((task) => (
-            <TaskCard key={task.id} task={task} today={today} onMove={onMove} onOpen={onOpen} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              today={today}
+              onMove={onMove}
+              onOpen={onOpen}
+              onHandOff={onHandOff}
+            />
           ))}
         </ul>
       )}

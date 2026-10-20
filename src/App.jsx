@@ -4,7 +4,7 @@ import { STORAGE_KEYS, TEAM, TYPES } from './lib/constants.js';
 import { TYPE_STYLES } from './lib/types.js';
 import { todayISO } from './lib/dates.js';
 import { buildSeedTasks, createId, isKnownAssignee, normaliseTasks } from './lib/tasks.js';
-import { buttonPrimary } from './lib/ui.js';
+import { buttonPrimary, focusRing } from './lib/ui.js';
 import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
@@ -25,7 +25,7 @@ import SegmentedControl from './components/SegmentedControl.jsx';
  *                             Toast, ErrorBoundary
  *
  * Milestones still to build — search for `TODO M<n>`:
- *   M7 task-owner · M8 due-tint · M9 context
+ *   M8 due-tint · M9 context
  *   M10 copy-prompt · M11 anchors · M12 secret-sauce · M13 pitch-ready
  */
 
@@ -91,8 +91,9 @@ function Tracker() {
   });
   const defaultAssignee = isKnownAssignee(prefs.lastAssignee) ? prefs.lastAssignee : TEAM[0];
 
-  // Board filter by type (FR-M6-05). UI-only state — not persisted (DR-STO-05).
+  // Board filters (FR-M6-05, FR-M7-08). UI-only state — not persisted (DR-STO-05).
   const [typeFilter, setTypeFilter] = useState('all');
+  const [ownerFilter, setOwnerFilter] = useState('all');
 
   // Editor state: null | { mode: 'create', status } | { mode: 'edit', id }
   const [editor, setEditor] = useState(null);
@@ -120,6 +121,30 @@ function Tracker() {
     setTasks((list) => list.map((t) => (t.id === id ? { ...t, status } : t)));
   }
 
+  // Handoff toast with Undo (FR-M7-03, FR-M7-07). Undo only restores the old
+  // owner if nobody changed the owner again in the meantime.
+  function announceHandOff(id, from, to) {
+    toast({
+      // Names like "Jo M." already end with a full stop.
+      message: `You gave this task to ${to}${to.endsWith('.') ? '' : '.'}`,
+      action: {
+        label: 'Undo',
+        onClick: () =>
+          setTasks((list) =>
+            list.map((t) => (t.id === id && t.assignee === to ? { ...t, assignee: from } : t)),
+          ),
+      },
+    });
+  }
+
+  // "Hand off to…" on the card: writes `assignee` only (DR-LIFE-01).
+  function handOff(id, assignee) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.assignee === assignee || !isKnownAssignee(assignee)) return;
+    setTasks((list) => list.map((t) => (t.id === id ? { ...t, assignee } : t)));
+    announceHandOff(id, task.assignee, assignee);
+  }
+
   // DR-LIFE-01: create sets every field; edit writes user-editable fields only.
   function saveTask(fields) {
     if (editor.mode === 'create') {
@@ -134,8 +159,14 @@ function Tracker() {
           contextUpdatedAt: null,
         },
       ]);
+      // Do not hide the new task behind an active filter.
+      if (typeFilter !== 'all' && typeFilter !== fields.type) setTypeFilter('all');
+      if (ownerFilter !== 'all' && ownerFilter !== fields.assignee) setOwnerFilter('all');
     } else {
       setTasks((list) => list.map((t) => (t.id === editor.id ? { ...t, ...fields } : t)));
+      if (editingTask && editingTask.assignee !== fields.assignee && isKnownAssignee(fields.assignee)) {
+        announceHandOff(editor.id, editingTask.assignee, fields.assignee);
+      }
     }
     if (isKnownAssignee(fields.assignee)) {
       setPrefs((p) => ({ ...p, lastAssignee: fields.assignee }));
@@ -172,6 +203,29 @@ function Tracker() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Owner filter (FR-M7-08) */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="owner-filter" className="text-sm font-semibold text-ink">
+              Owner
+            </label>
+            <select
+              id="owner-filter"
+              value={ownerFilter}
+              onChange={(e) => setOwnerFilter(e.target.value)}
+              className={`h-8 rounded-md border px-2 text-sm ${
+                ownerFilter === 'all'
+                  ? 'border-line-strong bg-surface-card text-ink'
+                  : 'border-brand-primary bg-brand-accent font-semibold text-brand-primary'
+              } ${focusRing}`}
+            >
+              <option value="all">Everyone</option>
+              {TEAM.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
           <SegmentedControl
             legend="Show tasks of type"
             hideLegend
@@ -210,7 +264,9 @@ function Tracker() {
           tasks={tasks}
           today={today}
           typeFilter={typeFilter}
+          ownerFilter={ownerFilter}
           onMove={moveTask}
+          onHandOff={handOff}
           onOpen={openEdit}
           onAdd={openCreate}
         />

@@ -227,7 +227,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                 </label>
                 <select id={ids.assignee} value={form.assignee} onChange={set('assignee')} className={`${inputBase} mt-1 h-10`}>
                   {!isKnownAssignee(form.assignee) && (
-                    <option value={form.assignee} disabled>
+                    <option value={form.assignee}>
                       Unassigned
                     </option>
                   )}
