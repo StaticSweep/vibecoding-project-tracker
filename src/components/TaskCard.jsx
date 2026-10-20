@@ -1,14 +1,16 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { STAGES, TYPES } from '../lib/constants.js';
+import { STAGES } from '../lib/constants.js';
 import { formatDueLabel, formatLongDate } from '../lib/dates.js';
 import { isKnownAssignee } from '../lib/tasks.js';
+import { TYPE_STYLES } from '../lib/types.js';
 import { focusRing, iconButton } from '../lib/ui.js';
+import TypeBadge from './TypeBadge.jsx';
 
 /**
  * One task on the board (DESIGN.md §4.3 / §4.4).
  *
  * M4 shows the data as plain text. Later milestones add:
- *   M6 type stripe + badge · M7 avatar + hand-off
+ *   M7 avatar + hand-off
  *   M8 due tint · M9 context indicator · M10 copy button
  */
 export default function TaskCard({ task, today, onMove, onOpen }) {
@@ -16,7 +18,7 @@ export default function TaskCard({ task, today, onMove, onOpen }) {
   const prev = STAGES[stageIndex - 1];
   const next = STAGES[stageIndex + 1];
 
-  const typeLabel = TYPES.find((t) => t.id === task.type)?.label ?? 'Feature';
+  const stripe = (TYPE_STYLES[task.type] ?? TYPE_STYLES.feature).stripe;
   const assignee = isKnownAssignee(task.assignee) ? task.assignee : 'Unassigned';
   const dueLabel = formatDueLabel(task, today);
   const titleId = `task-title-${task.id}`;
@@ -28,12 +30,11 @@ export default function TaskCard({ task, today, onMove, onOpen }) {
         data-task-id={task.id}
         tabIndex={-1}
         aria-labelledby={titleId}
-        className={`relative rounded-lg border border-line-subtle bg-surface-card p-3 transition-shadow duration-150 hover:shadow-sm focus-within:shadow-sm motion-reduce:transition-none ${focusRing}`}
+        className={`relative rounded-lg border border-line-subtle bg-surface-card py-3 pl-4 pr-3 transition-shadow duration-150 hover:shadow-sm focus-within:shadow-sm motion-reduce:transition-none ${focusRing}`}
       >
-        {/* TODO M6 tag-style: type stripe + coloured badge with icon. */}
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-ink-muted">
-          {typeLabel}
-        </p>
+        {/* Type stripe (FR-M6-01, DESIGN.md §2.2) — decoration; the badge carries the text. */}
+        <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1 rounded-l-[7px] ${stripe}`} />
+        <TypeBadge type={task.type} />
 
         {/*
           The title button covers the whole card (::after), so a click anywhere

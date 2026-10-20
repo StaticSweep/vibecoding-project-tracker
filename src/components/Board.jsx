@@ -8,18 +8,26 @@ import TaskCard from './TaskCard.jsx';
 /**
  * The four-column Kanban board (M4 data-model, DESIGN.md §4.1).
  */
-export default function Board({ tasks, today, onMove, onOpen, onAdd }) {
+/**
+ * `typeFilter` is 'all' or a type id (FR-M6-05). Hidden tasks still count
+ * toward the column total, so the count reads "1 of 3" while a filter is on.
+ */
+export default function Board({ tasks, today, onMove, onOpen, onAdd, typeFilter = 'all' }) {
   // After a move, put the focus back on the same control of the moved card.
   const [focusRequest, setFocusRequest] = useState(null);
   const [announcement, setAnnouncement] = useState('');
 
   const columns = useMemo(
     () =>
-      STAGES.map((stage) => ({
-        ...stage,
-        tasks: tasks.filter((t) => t.status === stage.id).sort(compareTasks),
-      })),
-    [tasks],
+      STAGES.map((stage) => {
+        const all = tasks.filter((t) => t.status === stage.id);
+        return {
+          ...stage,
+          total: all.length,
+          tasks: all.filter((t) => typeFilter === 'all' || t.type === typeFilter).sort(compareTasks),
+        };
+      }),
+    [tasks, typeFilter],
   );
 
   useEffect(() => {
@@ -63,6 +71,7 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd }) {
 function Column({ column, today, onMove, onOpen, onAdd }) {
   const headingId = `column-${column.id}`;
   const count = column.tasks.length;
+  const filtered = count < column.total;
 
   return (
     <section
@@ -77,8 +86,8 @@ function Column({ column, today, onMove, onOpen, onAdd }) {
           {column.label}
           <span className="font-sans font-normal normal-case tracking-normal text-ink-muted">
             {' · '}
-            {count}
-            <span className="sr-only">{count === 1 ? ' task' : ' tasks'}</span>
+            {filtered ? `${count} of ${column.total}` : count}
+            <span className="sr-only">{column.total === 1 ? ' task' : ' tasks'}</span>
           </span>
         </h2>
         <button
@@ -95,7 +104,9 @@ function Column({ column, today, onMove, onOpen, onAdd }) {
 
       {count === 0 ? (
         <div className="mx-3 mb-3 rounded-lg border border-dashed border-line-strong p-4 text-center text-[13px] leading-[18px] text-ink-muted">
-          No tasks here. Add a task or move a task to this stage.
+          {filtered
+            ? 'No tasks agree with this filter. Clear the filter to see all tasks.'
+            : 'No tasks here. Add a task or move a task to this stage.'}
         </div>
       ) : (
         <ul className="flex-1 space-y-2 overflow-y-auto px-3 pb-3">

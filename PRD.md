@@ -254,11 +254,11 @@ These principles are the tie-breaker whenever a requirement below is ambiguous.
 
 #### M6 `tag-style` — Feature vs. bug distinction
 
-- [ ] **FR-M6-01** · Must — Feature and bug cards are distinguishable at a glance using the `type-feature` / `type-bug` tokens (accent stripe per DESIGN.md §2) **and** a non-colour cue: an icon plus the text "Feature" / "Bug".
-- [ ] **FR-M6-02** · Must — Type colours are defined as tokens in `tailwind.config.js` matching DESIGN.md §2; no hex values are hard-coded in JSX.
-- [ ] **FR-M6-03** · Must — In the modal, type is chosen with a segmented control or radio group that shows the same colour + icon as the card.
-- [ ] **FR-M6-04** · Should — Type badge text meets 4.5:1 contrast against its background.
-- [ ] **FR-M6-05** · Could — A filter in the header shows only features or only bugs.
+- [x] **FR-M6-01** · Must — Feature and bug cards are distinguishable at a glance using the `type-feature` / `type-bug` tokens (accent stripe per DESIGN.md §2) **and** a non-colour cue: an icon plus the text "Feature" / "Bug".
+- [x] **FR-M6-02** · Must — Type colours are defined as tokens in `tailwind.config.js` matching DESIGN.md §2; no hex values are hard-coded in JSX.
+- [x] **FR-M6-03** · Must — In the modal, type is chosen with a segmented control or radio group that shows the same colour + icon as the card.
+- [x] **FR-M6-04** · Should — Type badge text meets 4.5:1 contrast against its background.
+- [x] **FR-M6-05** · Could — A filter in the header shows only features or only bugs.
 
 #### M7 `task-owner` — Assignee badge & handoff
 
@@ -433,7 +433,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 - [ ] **NFR-UI-06** · Must — The layout targets desktop viewports of 1280×720 and up, and stays usable (with horizontal scroll) down to 1024 px. Mobile is out of scope (§12).
 - [ ] **NFR-UI-07** · Should — Every interactive element has distinct default, hover, focus, active and disabled states.
 - [ ] **NFR-UI-08** · Should — Spacing follows a 4/8 px scale; border radius and border weight are consistent across components.
-- [ ] **NFR-UI-09** · Should — The destructive (delete) style is distinguishable from the `type-bug` colour, so a bug card never looks like a delete warning. Agreed: Delete is outlined/neutral; filled red appears only on the confirm button (§14.6 #2).
+- [x] **NFR-UI-09** · Should — The destructive (delete) style is distinguishable from the `type-bug` colour, so a bug card never looks like a delete warning. Agreed: Delete is outlined/neutral; filled red appears only on the confirm button (§14.6 #2).
 - [ ] **NFR-UI-10** · Should — Robust to real content: long titles clamp, long unbroken strings and URLs wrap or truncate, and a column with 30+ cards remains usable.
 
 #### Performance

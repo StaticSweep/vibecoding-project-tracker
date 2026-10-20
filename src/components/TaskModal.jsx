@@ -1,7 +1,9 @@
 import { useId, useMemo, useRef, useState } from 'react';
-import { Bug, Clock, Sparkles, Trash2, X } from 'lucide-react';
+import { Clock, Trash2, X } from 'lucide-react';
 import Modal from './Modal.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import SegmentedControl from './SegmentedControl.jsx';
+import { TYPE_STYLES } from '../lib/types.js';
 import { DESCRIPTION_MAX, STAGES, TEAM, TITLE_MAX, TYPES } from '../lib/constants.js';
 import { isKnownAssignee } from '../lib/tasks.js';
 import {
@@ -13,8 +15,6 @@ import {
   inputBase,
   labelBase,
 } from '../lib/ui.js';
-
-const TYPE_ICONS = { feature: Sparkles, bug: Bug };
 
 // Show a character counter once the user is this close to the limit (FR-M5-05).
 const COUNTER_FROM = 0.8;
@@ -191,36 +191,19 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
               )}
             </div>
 
-            {/* Type — segmented control (FR-M6-03; colours arrive in M6) */}
-            <fieldset>
-              <legend className={labelBase}>Type</legend>
-              <div className="mt-1 inline-flex rounded-md border border-line-strong p-0.5">
-                {TYPES.map((t) => {
-                  const Icon = TYPE_ICONS[t.id];
-                  const checked = form.type === t.id;
-                  return (
-                    <label key={t.id} className="relative">
-                      <input
-                        type="radio"
-                        name="type"
-                        value={t.id}
-                        checked={checked}
-                        onChange={set('type')}
-                        className="peer sr-only"
-                      />
-                      <span
-                        className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none peer-focus-visible:ring-2 peer-focus-visible:ring-brand-primary peer-focus-visible:ring-offset-2 ${
-                          checked ? 'bg-brand-primary text-white' : 'text-ink hover:bg-brand-accent'
-                        }`}
-                      >
-                        <Icon aria-hidden="true" className="h-4 w-4" />
-                        {t.label}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
+            {/* Type — segmented control with the type colours (FR-M6-03) */}
+            <SegmentedControl
+              legend="Type"
+              value={form.type}
+              onChange={(type) => setForm((f) => ({ ...f, type }))}
+              options={TYPES.map((t) => ({
+                value: t.id,
+                label: t.label,
+                icon: TYPE_STYLES[t.id].icon,
+                iconClass: TYPE_STYLES[t.id].iconClass,
+                selectedClass: TYPE_STYLES[t.id].selected,
+              }))}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               {/* Stage */}

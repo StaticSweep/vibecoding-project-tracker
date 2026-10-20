@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
-import { STORAGE_KEYS, TEAM } from './lib/constants.js';
+import { ListFilter, Plus } from 'lucide-react';
+import { STORAGE_KEYS, TEAM, TYPES } from './lib/constants.js';
+import { TYPE_STYLES } from './lib/types.js';
 import { todayISO } from './lib/dates.js';
 import { buildSeedTasks, createId, isKnownAssignee, normaliseTasks } from './lib/tasks.js';
 import { buttonPrimary } from './lib/ui.js';
@@ -9,6 +10,7 @@ import { ToastProvider, useToast } from './components/Toast.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Board from './components/Board.jsx';
 import TaskModal from './components/TaskModal.jsx';
+import SegmentedControl from './components/SegmentedControl.jsx';
 
 /**
  * Slopify — Vibecoding Project Tracker.
@@ -23,7 +25,7 @@ import TaskModal from './components/TaskModal.jsx';
  *                             Toast, ErrorBoundary
  *
  * Milestones still to build — search for `TODO M<n>`:
- *   M6 tag-style · M7 task-owner · M8 due-tint · M9 context
+ *   M7 task-owner · M8 due-tint · M9 context
  *   M10 copy-prompt · M11 anchors · M12 secret-sauce · M13 pitch-ready
  */
 
@@ -88,6 +90,9 @@ function Tracker() {
     fallback: {},
   });
   const defaultAssignee = isKnownAssignee(prefs.lastAssignee) ? prefs.lastAssignee : TEAM[0];
+
+  // Board filter by type (FR-M6-05). UI-only state — not persisted (DR-STO-05).
+  const [typeFilter, setTypeFilter] = useState('all');
 
   // Editor state: null | { mode: 'create', status } | { mode: 'edit', id }
   const [editor, setEditor] = useState(null);
@@ -166,23 +171,49 @@ function Tracker() {
           <p className="text-sm leading-5 text-ink-muted">Track the task. Keep the context.</p>
         </div>
 
-        <button
-          ref={addButtonRef}
-          type="button"
-          onClick={() => openCreate()}
-          aria-keyshortcuts="N"
-          title="Add task (N)"
-          className={buttonPrimary}
-        >
-          <Plus aria-hidden="true" className="h-4 w-4" />
-          Add task
-        </button>
+        <div className="flex items-center gap-4">
+          <SegmentedControl
+            legend="Show tasks of type"
+            hideLegend
+            size="sm"
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={[
+              { value: 'all', label: 'All', icon: ListFilter, selectedClass: 'bg-brand-primary text-white' },
+              ...TYPES.map((t) => ({
+                value: t.id,
+                label: t.label,
+                icon: TYPE_STYLES[t.id].icon,
+                iconClass: TYPE_STYLES[t.id].iconClass,
+                selectedClass: TYPE_STYLES[t.id].selected,
+              })),
+            ]}
+          />
+          <button
+            ref={addButtonRef}
+            type="button"
+            onClick={() => openCreate()}
+            aria-keyshortcuts="N"
+            title="Add task (N)"
+            className={buttonPrimary}
+          >
+            <Plus aria-hidden="true" className="h-4 w-4" />
+            Add task
+          </button>
+        </div>
       </header>
 
       {/* TODO M11 anchors: render the Anchor Board (Presentation / Demo / Report / Documentation) here. */}
 
       <main className="min-h-0 flex-1 overflow-x-auto px-6">
-        <Board tasks={tasks} today={today} onMove={moveTask} onOpen={openEdit} onAdd={openCreate} />
+        <Board
+          tasks={tasks}
+          today={today}
+          typeFilter={typeFilter}
+          onMove={moveTask}
+          onOpen={openEdit}
+          onAdd={openCreate}
+        />
       </main>
 
       <footer className="px-6 py-3 text-[13px] leading-[18px] text-ink-muted">
