@@ -1,26 +1,37 @@
 import { useId, useState } from 'react';
-import { ChevronDown, ListFilter, Plus, Settings, TriangleAlert, UserRound, X } from 'lucide-react';
+import { ChevronDown, CircleHelp, ListFilter, Plus, Search, Settings, TriangleAlert, UserRound, X } from 'lucide-react';
 import Avatar from './Avatar.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
 import { useAppData } from '../context/AppData.jsx';
 import { TYPES } from '../lib/constants.js';
 import { TYPE_STYLES } from '../lib/types.js';
-import { buttonPrimary, buttonSecondary, focusRing, glassPanel } from '../lib/ui.js';
+import { buttonPrimary, buttonSecondary, focusRing, glassPanel, iconButton, inputBase } from '../lib/ui.js';
 
 export const NO_FILTERS = { owner: 'all', type: 'all', query: '' };
 
 /**
  * App header (DESIGN.md §4.14): a floating glass bar with two rows.
- *   Row 1 — wordmark, project and team, Add task, the team lead, Settings.
+ *   Row 1 — wordmark, project and team, search, Add task, the team lead,
+ *           Settings, Help.
  *   Row 2 — filters: My tasks, owner, type, overdue count, Clear filters.
  *           On small screens the row folds away behind a "Filters" button.
  *
  * There is no sign-in. The lead's name shows as "you", and the button opens
  * the team settings.
  */
-export default function Header({ filters, onFiltersChange, overdueCount, onAdd, onOpenSettings, addButtonRef }) {
+export default function Header({
+  filters,
+  onFiltersChange,
+  overdueCount,
+  onAdd,
+  onOpenSettings,
+  onOpenHelp,
+  addButtonRef,
+  searchRef,
+}) {
   const { workspace, team, lead, readOnly } = useAppData();
   const ownerId = useId();
+  const searchId = useId();
   const filtersId = useId();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const setFilter = (key, value) => onFiltersChange({ ...filters, [key]: value });
@@ -36,6 +47,36 @@ export default function Header({ filters, onFiltersChange, overdueCount, onAdd, 
           <p className="truncate text-sm leading-5 text-ink-muted" title={subtitle}>
             {subtitle}
           </p>
+        </div>
+
+        {/* Search: title, description and context. "/" jumps here; Esc clears. */}
+        <div role="search" className="order-last w-full lg:order-none lg:w-auto lg:max-w-sm lg:flex-1">
+          <label htmlFor={searchId} className="sr-only">
+            Search tasks
+          </label>
+          <div className="relative">
+            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+            <input
+              ref={searchRef}
+              id={searchId}
+              type="search"
+              value={filters.query}
+              onChange={(e) => setFilter('query', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Escape') return;
+                if (filters.query) {
+                  e.preventDefault();
+                  setFilter('query', '');
+                } else {
+                  e.currentTarget.blur();
+                }
+              }}
+              placeholder="Search tasks"
+              aria-keyshortcuts="/"
+              autoComplete="off"
+              className={`${inputBase} h-9 rounded-full pl-9`}
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -69,6 +110,17 @@ export default function Header({ filters, onFiltersChange, overdueCount, onAdd, 
           <button type="button" onClick={() => onOpenSettings()} aria-haspopup="dialog" className={buttonSecondary}>
             <Settings aria-hidden="true" className="h-4 w-4" />
             Settings
+          </button>
+          <button
+            type="button"
+            onClick={onOpenHelp}
+            aria-haspopup="dialog"
+            aria-label="Help and shortcuts"
+            aria-keyshortcuts="?"
+            title="Help and shortcuts (?)"
+            className={`${iconButton} h-9 w-9 border border-line-strong bg-glass/80 text-ink`}
+          >
+            <CircleHelp aria-hidden="true" className="h-5 w-5" />
           </button>
           {/* Small screens: the filter row folds away behind this button. */}
           <button

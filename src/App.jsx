@@ -14,6 +14,7 @@ import TaskModal from './components/TaskModal.jsx';
 import Header, { NO_FILTERS } from './components/Header.jsx';
 import WelcomeCard from './components/WelcomeCard.jsx';
 import SettingsDialog from './components/SettingsDialog.jsx';
+import HelpDialog from './components/HelpDialog.jsx';
 import DataTools from './components/DataTools.jsx';
 
 /**
@@ -69,20 +70,26 @@ function Tracker() {
 
   // Settings dialog: null | the tab to open on.
   const [settingsTab, setSettingsTab] = useState(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const searchRef = useRef(null);
 
   const openCreate = (status = 'todo') => setEditor({ mode: 'create', status });
   const openEdit = (id) => setEditor({ mode: 'edit', id });
   const closeEditor = () => setEditor(null);
 
-  // NFR-USE-07: "N" opens a new task when the user is not typing.
+  // Global shortcuts (NFR-USE-07): N new task, / search, ? help. Not while
+  // the user types, and not while a dialog is open.
   useEffect(() => {
     function onKeyDown(e) {
-      if (e.key.toLowerCase() !== 'n' || e.ctrlKey || e.metaKey || e.altKey || readOnly) return;
-      if (document.querySelector('[aria-modal="true"]')) return; // a dialog is open
+      if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
       const el = e.target;
       if (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return;
+      if (e.key.toLowerCase() === 'n' && !readOnly) openCreate();
+      else if (e.key === '/') searchRef.current?.focus();
+      else if (e.key === '?') setHelpOpen(true);
+      else return;
       e.preventDefault();
-      openCreate();
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -222,7 +229,9 @@ function Tracker() {
         overdueCount={overdueCount}
         onAdd={openCreate}
         onOpenSettings={(tab = 'team') => setSettingsTab(tab)}
+        onOpenHelp={() => setHelpOpen(true)}
         addButtonRef={addButtonRef}
+        searchRef={searchRef}
       />
 
       {/* DR-MIG-04: data from a newer Slopify is shown but never overwritten. */}
@@ -263,6 +272,7 @@ function Tracker() {
       </footer>
 
       {settingsTab && <SettingsDialog initialTab={settingsTab} onClose={() => setSettingsTab(null)} />}
+      {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
 
       {editor && (editor.mode === 'create' || editingTask) && (
         <TaskModal

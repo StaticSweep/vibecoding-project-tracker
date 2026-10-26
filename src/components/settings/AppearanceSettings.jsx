@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import SegmentedControl from '../SegmentedControl.jsx';
+import AccentPicker from './AccentPicker.jsx';
 import { useAppData } from '../../context/AppData.jsx';
 import { TEXT_SIZES, THEMES } from '../../lib/prefs.js';
 import { focusRing, helperText, labelBase } from '../../lib/ui.js';
@@ -41,6 +42,8 @@ export default function AppearanceSettings() {
           />
         </div>
       </section>
+
+      <AccentPicker />
 
       <section aria-labelledby="settings-comfort">
         <h3 id="settings-comfort" className={sectionHeading}>
