@@ -1,19 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { ListFilter, Plus, TriangleAlert } from 'lucide-react';
-import { STORAGE_KEYS, TEAM, TYPES } from './lib/constants.js';
+import { TYPES } from './lib/constants.js';
 import { TYPE_STYLES } from './lib/types.js';
 import { getDueState, todayISO } from './lib/dates.js';
-import { buildSeedTasks, createId, isKnownAssignee, normaliseTasks } from './lib/tasks.js';
+import { createId } from './lib/tasks.js';
+import { findMember } from './lib/team.js';
 import { nextContextUpdatedAt } from './lib/context.js';
 import { nextHistory } from './lib/history.js';
-import { migrateTasks, readSchemaVersion, writeSchemaVersion } from './lib/schema.js';
 import { buttonPrimary, focusRing, glassPanel } from './lib/ui.js';
-import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
+import { AppDataProvider, useAppData } from './context/AppData.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Board from './components/Board.jsx';
 import AnchorBoard from './components/AnchorBoard.jsx';
-import { DEFAULT_ANCHORS, normaliseAnchors } from './lib/anchors.js';
 import TaskModal from './components/TaskModal.jsx';
 import SegmentedControl from './components/SegmentedControl.jsx';
 
@@ -21,27 +20,31 @@ import SegmentedControl from './components/SegmentedControl.jsx';
  * Slopify — Vibecoding Project Tracker.
  *
  * Code map:
- *   src/lib/constants.js      STAGES, TEAM, TYPES, CONTEXT_TOOLS, storage keys
+ *   src/lib/constants.js      STAGES, ROLES, TYPES, CONTEXT_TOOLS, storage keys
+ *   src/lib/schema.js         schema versions + migrations (run in main.jsx)
+ *   src/lib/team.js           team members, roles, the team lead, workspace
  *   src/lib/dates.js          local-date helpers, due state + labels
- *   src/lib/tasks.js          ids, normalisation, sort order, seed data
+ *   src/lib/tasks.js          normalisation, sort order, starter tasks
+ *   src/lib/prefs.js          per-browser settings (theme, text size, accent)
  *   src/lib/ui.js             shared Tailwind class strings (DESIGN.md §4)
- *   src/hooks/useLocalStorage.js
+ *   src/context/AppData.jsx   all stored state, shared through context
  *   src/components/           Board, TaskCard, TaskModal, Modal, ConfirmDialog,
- *                             Toast, ErrorBoundary
+ *                             Toast, ErrorBoundary, …
  *
- * Milestones still to build — search for `TODO M<n>`:
- *   M12 secret-sauce · M13 pitch-ready
+ * There is no sign-in: Slopify always acts as the team lead.
  */
 
 // The starter exported these from App.jsx; keep the exports for compatibility.
 export { STAGES, TEAM } from './lib/constants.js';
 export { useLocalStorage } from './hooks/useLocalStorage.js';
 
-export default function App() {
+export default function App({ readOnly = false }) {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <Tracker />
+        <AppDataProvider readOnly={readOnly}>
+          <Tracker />
+        </AppDataProvider>
       </ToastProvider>
     </ErrorBoundary>
   );
@@ -51,61 +54,9 @@ function Tracker() {
   const toast = useToast();
   const today = useToday();
 
-  const writeErrorShown = useRef(false);
-  const [tasks, setTasks, tasksNotice] = useLocalStorage(
-    STORAGE_KEYS.tasks,
-    () => buildSeedTasks(todayISO()),
-    {
-      normalise: (raw) => {
-        // DR-MIG-02: migrate older data first, then normalise.
-        const result = normaliseTasks(migrateTasks(raw, readSchemaVersion()), todayISO());
-        return { ok: result.ok, value: result.tasks, dropped: result.dropped };
-      },
-      fallback: [],
-      onWriteError: () => {
-        if (writeErrorShown.current) return;
-        writeErrorShown.current = true;
-        toast({
-          tone: 'error',
-          message:
-            'Slopify cannot save your changes. The browser storage is full. Export your board now.',
-        });
-      },
-    },
-  );
-
-  // DR-MIG-01: record the schema version once the data is loaded and migrated.
-  useEffect(writeSchemaVersion, []);
-
-  // M11: the four deliverable links (DR-ANC-01, DR-INT-06).
-  const [anchors, setAnchors, anchorsNotice] = useLocalStorage(STORAGE_KEYS.anchors, DEFAULT_ANCHORS, {
-    normalise: normaliseAnchors,
-    fallback: DEFAULT_ANCHORS,
-  });
+  const { tasks, setTasks, anchors, setAnchors, team, lead } = useAppData();
   const setAnchorUrl = (id, url) =>
     setAnchors((list) => list.map((a) => (a.id === id ? { ...a, url } : a))); // writes `url` only
-
-  // DR-INT-01: tell the user once if saved data had to be repaired.
-  const noticeShown = useRef(false);
-  useEffect(() => {
-    if (!(tasksNotice || anchorsNotice) || noticeShown.current) return;
-    noticeShown.current = true;
-    toast({
-      tone: 'error',
-      message: 'Slopify cannot read some saved data. A backup copy is in the browser.',
-    });
-  }, [tasksNotice, anchorsNotice, toast]);
-
-  // Per-browser UI preferences (DR-STO table: `vibetracker.prefs`).
-  const [prefs, setPrefs] = useLocalStorage(STORAGE_KEYS.prefs, {}, {
-    normalise: (raw) => ({
-      ok: raw !== null && typeof raw === 'object' && !Array.isArray(raw),
-      value: raw,
-      dropped: 0,
-    }),
-    fallback: {},
-  });
-  const defaultAssignee = isKnownAssignee(prefs.lastAssignee) ? prefs.lastAssignee : TEAM[0];
 
   // Board filters (FR-M6-05, FR-M7-08). UI-only state — not persisted (DR-STO-05).
   const [typeFilter, setTypeFilter] = useState('all');
@@ -140,9 +91,10 @@ function Tracker() {
   // Handoff toast with Undo (FR-M7-03, FR-M7-07). Undo only restores the old
   // owner if nobody changed the owner again in the meantime.
   function announceHandOff(id, from, to) {
+    const name = findMember(team, to)?.name ?? 'Unassigned';
     toast({
       // Names like "Jo M." already end with a full stop.
-      message: `You gave this task to ${to}${to.endsWith('.') ? '' : '.'}`,
+      message: `You gave this task to ${name}${name.endsWith('.') ? '' : '.'}`,
       action: {
         label: 'Undo',
         onClick: () =>
@@ -156,7 +108,7 @@ function Tracker() {
   // "Hand off to…" on the card: writes `assignee` only (DR-LIFE-01).
   function handOff(id, assignee) {
     const task = tasks.find((t) => t.id === id);
-    if (!task || task.assignee === assignee || !isKnownAssignee(assignee)) return;
+    if (!task || task.assignee === assignee || !findMember(team, assignee)) return;
     setTasks((list) => list.map((t) => (t.id === id ? { ...t, assignee } : t)));
     announceHandOff(id, task.assignee, assignee);
   }
@@ -190,12 +142,9 @@ function Tracker() {
             : t,
         ),
       );
-      if (editingTask && editingTask.assignee !== fields.assignee && isKnownAssignee(fields.assignee)) {
+      if (editingTask && editingTask.assignee !== fields.assignee && findMember(team, fields.assignee)) {
         announceHandOff(editor.id, editingTask.assignee, fields.assignee);
       }
-    }
-    if (isKnownAssignee(fields.assignee)) {
-      setPrefs((p) => ({ ...p, lastAssignee: fields.assignee }));
     }
     closeEditor();
   }
@@ -225,7 +174,7 @@ function Tracker() {
       {/* Floating glass navigation bar (DESIGN.md §2.6) */}
       <header className={`mx-4 mb-3 mt-4 flex items-center justify-between gap-4 rounded-3xl px-5 py-3 ${glassPanel}`}>
         <div>
-          <h1 className="font-heading text-[28px] font-semibold leading-8 tracking-tight text-brand-primary">
+          <h1 className="font-heading text-wordmark font-semibold leading-8 tracking-tight text-brand-primary">
             Slopify
           </h1>
           <p className="text-sm leading-5 text-ink-muted">Track the task. Keep the context.</p>
@@ -249,14 +198,14 @@ function Tracker() {
               onChange={(e) => setOwnerFilter(e.target.value)}
               className={`h-8 rounded-full border px-3 text-sm ${
                 ownerFilter === 'all'
-                  ? 'border-line-strong bg-white/75 text-ink'
+                  ? 'border-line-strong bg-glass/75 text-ink'
                   : 'border-brand-primary bg-brand-accent font-semibold text-brand-primary'
               } ${focusRing}`}
             >
               <option value="all">Everyone</option>
-              {TEAM.map((name) => (
-                <option key={name} value={name}>
-                  {name}
+              {team.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
                 </option>
               ))}
             </select>
@@ -268,7 +217,7 @@ function Tracker() {
             value={typeFilter}
             onChange={setTypeFilter}
             options={[
-              { value: 'all', label: 'All', icon: ListFilter, selectedClass: 'bg-brand-primary text-white' },
+              { value: 'all', label: 'All', icon: ListFilter, selectedClass: 'bg-brand-primary text-on-brand' },
               ...TYPES.map((t) => ({
                 value: t.id,
                 label: t.label,
@@ -310,7 +259,7 @@ function Tracker() {
       </main>
 
       <footer className="px-4 py-3">
-        <p className={`inline-block rounded-full px-4 py-1.5 text-[13px] leading-[18px] text-ink-muted ${glassPanel}`}>
+        <p className={`inline-block rounded-full px-4 py-1.5 text-caption text-ink-muted ${glassPanel}`}>
           Slopify keeps your data in this browser only. Export the board to share it or to keep a copy.
         </p>
       </footer>
@@ -320,7 +269,7 @@ function Tracker() {
           key={editor.mode === 'edit' ? editor.id : `new-${editor.status}`}
           mode={editor.mode}
           task={editingTask}
-          defaults={{ status: editor.status, assignee: defaultAssignee }}
+          defaults={{ status: editor.status, assignee: lead?.id ?? null }}
           today={today}
           onSave={saveTask}
           onDelete={deleteTask}
@@ -341,9 +290,9 @@ function GlassBackdrop() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       {/* Worst case on the thinnest glass (60 % white): text-muted 4.93:1. */}
-      <div className="absolute -left-32 -top-40 h-[38rem] w-[38rem] rounded-full bg-[#9ED8D3] opacity-85 blur-3xl" />
-      <div className="absolute -right-24 top-10 h-[34rem] w-[34rem] rounded-full bg-[#B9BCF6] opacity-85 blur-3xl" />
-      <div className="absolute -bottom-56 left-[30%] h-[36rem] w-[36rem] rounded-full bg-[#F0BFE3] opacity-80 blur-3xl" />
+      <div className="absolute -left-32 -top-40 h-[38rem] w-[38rem] rounded-full bg-blob-1 opacity-85 blur-3xl" />
+      <div className="absolute -right-24 top-10 h-[34rem] w-[34rem] rounded-full bg-blob-2 opacity-85 blur-3xl" />
+      <div className="absolute -bottom-56 left-[30%] h-[36rem] w-[36rem] rounded-full bg-blob-3 opacity-80 blur-3xl" />
     </div>
   );
 }

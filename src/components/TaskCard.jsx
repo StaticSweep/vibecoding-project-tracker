@@ -1,10 +1,11 @@
 import { ChevronLeft, ChevronRight, History, ScrollText } from 'lucide-react';
 import { hasContext, isContextStale } from '../lib/context.js';
 import { versionCount } from '../lib/history.js';
-import { STAGES, TEAM } from '../lib/constants.js';
+import { STAGES } from '../lib/constants.js';
 import { formatDueLabel, formatLongDate, getDueState } from '../lib/dates.js';
 import { DUE_STYLES } from '../lib/due.js';
-import { isKnownAssignee } from '../lib/tasks.js';
+import { findMember, memberWithRole } from '../lib/team.js';
+import { useAppData, usePromptOptions } from '../context/AppData.jsx';
 import { TYPE_STYLES } from '../lib/types.js';
 import { focusRing, iconButton } from '../lib/ui.js';
 import TypeBadge from './TypeBadge.jsx';
@@ -16,12 +17,14 @@ import { taskToPrompt } from '../lib/prompt.js';
  * One task on the board (DESIGN.md §4.3 / §4.4).
  */
 export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
+  const { team } = useAppData();
+  const promptOptions = usePromptOptions();
   const stageIndex = STAGES.findIndex((s) => s.id === task.status);
   const prev = STAGES[stageIndex - 1];
   const next = STAGES[stageIndex + 1];
 
   const stripe = (TYPE_STYLES[task.type] ?? TYPE_STYLES.feature).stripe;
-  const known = isKnownAssignee(task.assignee);
+  const owner = findMember(team, task.assignee);
   const dueLabel = formatDueLabel(task, today);
   const due = DUE_STYLES[getDueState(task, today)];
   const DueIcon = due.icon;
@@ -38,7 +41,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
         data-task-id={task.id}
         tabIndex={-1}
         aria-labelledby={titleId}
-        className={`relative rounded-2xl border border-white/80 ${due.card} py-3 pl-5 pr-3 shadow-glass-sm backdrop-blur-xl transition-shadow duration-150 hover:shadow-glass focus-within:shadow-glass motion-reduce:transition-none reduce-transparency:backdrop-blur-none ${focusRing}`}
+        className={`relative rounded-2xl border border-glass-edge/80 ${due.card} py-3 pl-5 pr-3 shadow-glass-sm backdrop-blur-xl transition-shadow duration-150 hover:shadow-glass focus-within:shadow-glass motion-reduce:transition-none reduce-transparency:backdrop-blur-none ${focusRing}`}
       >
         {/* Type stripe (FR-M6-01, DESIGN.md §2.2) — decoration; the badge carries the text. */}
         <span aria-hidden="true" className={`absolute bottom-3 left-2 top-3 w-1 rounded-full ${stripe}`} />
@@ -48,7 +51,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
           <div className="flex items-center gap-1">
             {dueLabel && (
               <span
-                className={`flex shrink-0 items-center gap-1 text-[13px] font-semibold leading-[18px] ${due.label}`}
+                className={`flex shrink-0 items-center gap-1 text-caption font-semibold ${due.label}`}
                 title={task.dueDate ? formatLongDate(task.dueDate) : undefined}
               >
                 {DueIcon && <DueIcon aria-hidden="true" className="h-3.5 w-3.5" />}
@@ -57,7 +60,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             )}
             {/* M10: one click copies the task as a prompt (FR-M10-01) */}
             <div className="relative z-10 -my-1.5 shrink-0">
-              <CopyPromptButton variant="icon" getText={() => taskToPrompt(task, { today })} />
+              <CopyPromptButton variant="icon" getText={() => taskToPrompt(task, { today, ...promptOptions })} />
             </div>
           </div>
         </div>
@@ -66,7 +69,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
           The title button covers the whole card (::after), so a click anywhere
           on the card opens the edit modal (FR-M5-08). Controls sit above it.
         */}
-        <h3 id={titleId} className="mt-1 text-[15px] font-semibold leading-[22px] text-ink">
+        <h3 id={titleId} className="mt-1 text-card-title font-semibold text-ink">
           <button
             type="button"
             data-control="open"
@@ -85,24 +88,24 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
           */}
           {/* The owner keeps its full width; the context indicator shrinks first. */}
           <div className="relative z-10 flex shrink-0 items-center gap-1">
-            <Avatar name={task.assignee} />
+            <Avatar member={owner} />
             <label htmlFor={ownerSelectId} className="sr-only">
               Hand off to…
             </label>
             <select
               id={ownerSelectId}
               data-control="owner"
-              value={task.assignee}
-              onChange={(e) => onHandOff(task.id, e.target.value)}
-              title="Hand off to…"
-              className={`h-7 max-w-[9rem] truncate rounded-full border border-transparent bg-transparent pl-1.5 pr-5 text-sm text-ink hover:border-line-strong hover:bg-white/80 ${focusRing}`}
+              value={owner ? owner.id : ''}
+              onChange={(e) => onHandOff(task.id, e.target.value || null)}
+              title={owner ? `${memberWithRole(owner)} · Hand off to…` : 'Hand off to…'}
+              className={`h-7 max-w-[9rem] truncate rounded-full border border-transparent bg-transparent pl-1.5 pr-5 text-sm text-ink hover:border-line-strong hover:bg-glass/80 ${focusRing}`}
             >
-              {!known && <option value={task.assignee}>Unassigned</option>}
+              {!owner && <option value="">Unassigned</option>}
               {/* Plain names keep the select as narrow as the longest name. */}
               <optgroup label="Hand off to…">
-                {TEAM.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
+                {team.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
                   </option>
                 ))}
               </optgroup>
@@ -116,7 +119,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
             {withContext && (
               <span
-                className={`flex min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap text-[13px] font-semibold leading-[18px] ${
+                className={`flex min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap text-caption font-semibold ${
                   stale ? 'text-due-warning-fg' : 'text-ink-muted'
                 }`}
                 title={stale ? 'The context is more than 3 days old.' : 'This task has context.'}
@@ -154,7 +157,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             data-control="stage"
             value={task.status}
             onChange={(e) => onMove(task.id, e.target.value, 'stage')}
-            className={`h-8 min-w-0 flex-1 rounded-full border border-line-strong bg-white/80 px-3 text-sm text-ink ${focusRing}`}
+            className={`h-8 min-w-0 flex-1 rounded-full border border-line-strong bg-glass/80 px-3 text-sm text-ink ${focusRing}`}
           >
             {STAGES.map((s) => (
               <option key={s.id} value={s.id}>

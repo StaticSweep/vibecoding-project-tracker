@@ -5,6 +5,7 @@ import { formatLongDateTime, formatTimeAgo } from '../lib/dates.js';
 import { normaliseHistory } from '../lib/history.js';
 import { taskToPrompt } from '../lib/prompt.js';
 import { buttonSecondary, focusRing, helperText } from '../lib/ui.js';
+import { usePromptOptions } from '../context/AppData.jsx';
 
 /**
  * Prompt history timeline (M12 secret-sauce).
@@ -24,11 +25,12 @@ export default function PromptHistory({ task, draft, today, onRestore }) {
     : [];
   const versions = [...current, ...normaliseHistory(task.contextHistory)];
   const [open, setOpen] = useState(null); // index of the expanded version
+  const promptOptions = usePromptOptions();
 
   if (versions.length === 0) return null;
 
   return (
-    <details className="group overflow-hidden rounded-2xl border border-line-subtle bg-white/60" open={versions.length > 1}>
+    <details className="group overflow-hidden rounded-2xl border border-line-subtle bg-glass/60" open={versions.length > 1}>
       <summary className="flex h-9 cursor-pointer items-center gap-2 px-3 text-sm font-semibold text-ink hover:bg-brand-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
         Prompt history
         <span className="font-normal text-ink-muted">
@@ -74,7 +76,7 @@ export default function PromptHistory({ task, draft, today, onRestore }) {
                     getText={() =>
                       taskToPrompt(
                         { ...draft(), context: v.context, contextTool: v.contextTool, contextUpdatedAt: v.savedAt },
-                        { today },
+                        { today, ...promptOptions },
                       )
                     }
                   />
@@ -94,7 +96,7 @@ export default function PromptHistory({ task, draft, today, onRestore }) {
               {expanded && (
                 <pre
                   id={panelId}
-                  className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-surface-page px-3 py-2 font-mono text-[13px] leading-5 text-ink"
+                  className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-surface-page px-3 py-2 font-mono text-caption leading-5 text-ink"
                 >
                   {v.context}
                 </pre>

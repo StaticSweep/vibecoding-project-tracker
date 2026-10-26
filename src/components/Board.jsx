@@ -108,7 +108,7 @@ function Column({ column, today, onMove, onOpen, onAdd, onHandOff }) {
       </header>
 
       {count === 0 ? (
-        <div className="mx-3 mb-3 rounded-2xl border border-dashed border-line-strong bg-white/50 p-4 text-center text-[13px] leading-[18px] text-ink-muted reduce-transparency:bg-surface-card">
+        <div className="mx-3 mb-3 rounded-2xl border border-dashed border-line-strong bg-glass/50 p-4 text-center text-caption text-ink-muted reduce-transparency:bg-surface-card">
           {filtered
             ? 'No tasks agree with this filter. Clear the filter to see all tasks.'
             : 'No tasks here. Add a task or move a task to this stage.'}

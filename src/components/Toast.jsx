@@ -77,7 +77,7 @@ function ToastItem({ toast, onDismiss }) {
 
   return (
     <div
-      className={`pointer-events-auto flex items-start gap-3 rounded-2xl bg-ink/85 px-4 py-3 text-sm text-white shadow-glass-lg backdrop-blur-xl reduce-transparency:bg-ink transition-opacity duration-200 motion-reduce:transition-none ${
+      className={`pointer-events-auto flex items-start gap-3 rounded-2xl bg-inverse/85 px-4 py-3 text-sm text-on-inverse shadow-glass-lg backdrop-blur-xl reduce-transparency:bg-inverse transition-opacity duration-200 motion-reduce:transition-none ${
         shown ? 'opacity-100' : 'opacity-0'
       }`}
     >
@@ -93,7 +93,7 @@ function ToastItem({ toast, onDismiss }) {
             toast.action.onClick();
             onDismiss(toast.id);
           }}
-          className={`rounded font-semibold text-brand-accent underline underline-offset-2 hover:text-white ${focusRing}`}
+          className={`rounded font-semibold text-brand-accent underline underline-offset-2 hover:text-on-inverse ${focusRing}`}
         >
           {toast.action.label}
         </button>
@@ -102,7 +102,7 @@ function ToastItem({ toast, onDismiss }) {
         type="button"
         onClick={() => onDismiss(toast.id)}
         aria-label="Close notification"
-        className={`-m-1 rounded p-1 text-white/80 hover:text-white ${focusRing}`}
+        className={`-m-1 rounded p-1 text-on-inverse/80 hover:text-on-inverse ${focusRing}`}
       >
         <X aria-hidden="true" className="h-4 w-4" />
       </button>

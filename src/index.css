@@ -2,13 +2,155 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
+/*
+ * Colour tokens (DESIGN.md §2) as RGB triplets, so Tailwind can add alpha:
+ * `bg-glass/60` → rgb(var(--c-glass) / 0.6). Contrast ratios for every pair
+ * are listed in DESIGN.md §2 (light) and §2.7 (dark).
+ */
+:root {
+  color-scheme: light;
+
+  --c-brand-primary: 21 94 99; /* #155E63 */
+  --c-brand-primary-hover: 14 74 78; /* #0E4A4E */
+  --c-brand-accent: 227 241 241; /* #E3F1F1 */
+  --c-on-brand: 255 255 255;
+
+  --c-surface-page: 246 247 249; /* #F6F7F9 */
+  --c-surface-card: 255 255 255;
+  --c-field: 255 255 255;
+  --c-glass: 255 255 255;
+  --c-glass-edge: 255 255 255;
+
+  --c-ink: 30 36 48; /* #1E2430 */
+  --c-ink-muted: 91 100 114; /* #5B6472 */
+  --c-line-subtle: 213 217 224; /* #D5D9E0 */
+  --c-line-strong: 138 147 163; /* #8A93A3 */
+  --c-danger: 185 28 28; /* #B91C1C */
+  --c-on-strong: 255 255 255;
+
+  --c-inverse: 30 36 48;
+  --c-on-inverse: 255 255 255;
+  --c-scrim: 30 36 48;
+
+  --c-blob-1: 158 216 211; /* #9ED8D3 teal */
+  --c-blob-2: 185 188 246; /* #B9BCF6 lavender */
+  --c-blob-3: 240 191 227; /* #F0BFE3 pink */
+
+  --c-type-feature: 67 56 202; /* #4338CA */
+  --c-type-feature-bg: 238 240 255;
+  --c-type-feature-fg: 55 48 163;
+  --c-type-bug: 162 28 175; /* #A21CAF */
+  --c-type-bug-bg: 251 239 252;
+  --c-type-bug-fg: 134 25 143;
+
+  --c-due-safe: 21 128 61; /* #15803D */
+  --c-due-safe-bg: 237 247 240;
+  --c-due-safe-fg: 22 101 52;
+  --c-due-warning: 180 83 9; /* #B45309 */
+  --c-due-warning-bg: 255 246 229;
+  --c-due-warning-fg: 146 64 14;
+  --c-due-overdue: 185 28 28; /* #B91C1C */
+  --c-due-overdue-bg: 253 237 237;
+  --c-due-overdue-fg: 153 27 27;
+  --c-due-neutral: 100 116 139; /* #64748B */
+  --c-due-neutral-bg: 241 243 246;
+  --c-due-neutral-fg: 71 85 105;
+
+  --shadow-glass: 0 8px 32px -8px rgba(30, 36, 48, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-glass-sm: 0 2px 10px -2px rgba(30, 36, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --shadow-glass-lg: 0 24px 64px -12px rgba(30, 36, 48, 0.32);
+}
+
+/* Dark theme (DESIGN.md §2.7). Every text pair stays at 4.5:1 or more. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --c-brand-primary: 91 194 186; /* #5BC2BA */
+  --c-brand-primary-hover: 134 214 207; /* #86D6CF */
+  --c-brand-accent: 23 58 61; /* #173A3D */
+  --c-on-brand: 11 23 24; /* #0B1718 */
+
+  --c-surface-page: 14 19 26; /* #0E131A */
+  --c-surface-card: 25 32 42; /* #19202A */
+  --c-field: 17 23 32; /* #111720 */
+  --c-glass: 25 32 42;
+  --c-glass-edge: 70 82 99;
+
+  --c-ink: 232 236 242; /* #E8ECF2 */
+  --c-ink-muted: 169 178 192; /* #A9B2C0 */
+  --c-line-subtle: 44 53 66; /* #2C3542 */
+  --c-line-strong: 110 122 140; /* #6E7A8C */
+  --c-danger: 242 116 116; /* #F27474 */
+  --c-on-strong: 11 23 24;
+
+  --c-inverse: 232 236 242;
+  --c-on-inverse: 25 32 42;
+  --c-scrim: 0 0 0;
+
+  --c-blob-1: 15 61 59; /* #0F3D3B */
+  --c-blob-2: 36 39 90; /* #24275A */
+  --c-blob-3: 65 32 61; /* #41203D */
+
+  --c-type-feature: 149 156 250; /* #959CFA */
+  --c-type-feature-bg: 37 42 82;
+  --c-type-feature-fg: 203 206 255;
+  --c-type-bug: 228 134 238; /* #E486EE */
+  --c-type-bug-bg: 58 30 64;
+  --c-type-bug-fg: 244 198 249;
+
+  --c-due-safe: 79 214 138; /* #4FD68A */
+  --c-due-safe-bg: 19 48 31;
+  --c-due-safe-fg: 163 233 189;
+  --c-due-warning: 242 170 82; /* #F2AA52 */
+  --c-due-warning-bg: 53 38 17;
+  --c-due-warning-fg: 251 214 154;
+  --c-due-overdue: 242 116 116; /* #F27474 */
+  --c-due-overdue-bg: 60 26 27;
+  --c-due-overdue-fg: 252 174 174;
+  --c-due-neutral: 151 164 183; /* #97A4B7 */
+  --c-due-neutral-bg: 35 42 53;
+  --c-due-neutral-fg: 205 213 224;
+
+  --shadow-glass: 0 8px 32px -8px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-glass-sm: 0 2px 10px -2px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-glass-lg: 0 24px 64px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Text size setting (Settings → Accessibility). Every size is in rem. */
+:root[data-text-size='large'] {
+  font-size: 115%;
+}
+:root[data-text-size='larger'] {
+  font-size: 130%;
+}
+
+html,
+body,
+#root {
   height: 100%;
 }
 
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #f8fafc; /* slate-50 */
-  color: #0f172a;            /* slate-900 */
+  @apply bg-surface-page font-sans text-ink antialiased;
+}
+
+/*
+ * Reduce motion (NFR-A11Y-09, DESIGN.md §4.17): from the OS setting, or from
+ * Slopify's own setting when the OS has none.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after {
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
+  scroll-behavior: auto !important;
 }

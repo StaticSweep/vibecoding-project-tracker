@@ -82,7 +82,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/30 p-6 backdrop-blur-sm reduce-transparency:bg-ink/50 reduce-transparency:backdrop-blur-none"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-scrim/30 p-6 backdrop-blur-sm reduce-transparency:bg-scrim/50 reduce-transparency:backdrop-blur-none"
       onMouseDown={(e) => {
         if (e.target !== e.currentTarget) return;
         // Stop the browser from moving focus to <body> after we restore it.

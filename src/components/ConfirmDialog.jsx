@@ -27,7 +27,7 @@ export default function ConfirmDialog({
       describedBy={bodyId}
       onRequestClose={onCancel}
       initialFocusRef={cancelRef}
-      className="max-w-[400px]"
+      className="max-w-[25rem]"
     >
       <div className="p-6">
         <h2 id={titleId} className="font-heading text-xl font-semibold leading-7">

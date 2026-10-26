@@ -75,7 +75,7 @@ function ManualCopyDialog({ text, onClose }) {
   }, []);
 
   return (
-    <Modal labelledBy={titleId} describedBy={helpId} onRequestClose={onClose} initialFocusRef={areaRef} className="max-w-[640px]">
+    <Modal labelledBy={titleId} describedBy={helpId} onRequestClose={onClose} initialFocusRef={areaRef} className="max-w-[40rem]">
       <div className="space-y-3 p-6">
         <h2 id={titleId} className="font-heading text-xl font-semibold leading-7">
           Copy the prompt
@@ -89,7 +89,7 @@ function ManualCopyDialog({ text, onClose }) {
           value={text}
           rows={12}
           onFocus={(e) => e.target.select()}
-          className="w-full resize-y rounded-xl border border-line-strong bg-surface-page px-3 py-2 font-mono text-sm leading-[22px] text-ink"
+          className="w-full resize-y rounded-xl border border-line-strong bg-surface-page px-3 py-2 font-mono text-sm leading-[1.375rem] text-ink"
         />
         <div className="flex justify-end">
           <button type="button" onClick={onClose} className={buttonPrimary}>

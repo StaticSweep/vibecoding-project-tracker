@@ -1,6 +1,9 @@
-import { STAGE_IDS, TEAM, TYPE_IDS, CONTEXT_TOOLS } from './constants.js';
+import { STAGE_IDS, TYPE_IDS, CONTEXT_TOOLS } from './constants.js';
 import { addDays, isISODate } from './dates.js';
 import { normaliseHistory } from './history.js';
+import { createId } from './ids.js';
+
+export { createId };
 
 /**
  * @typedef {Object} Task
@@ -9,7 +12,7 @@ import { normaliseHistory } from './history.js';
  * @property {string} description
  * @property {'feature'|'bug'} type
  * @property {'todo'|'in-progress'|'review'|'done'} status
- * @property {string} assignee
+ * @property {string|null} assignee       team member id (schema v3); null = Unassigned
  * @property {string|null} dueDate          ISO 'YYYY-MM-DD'
  * @property {string} createdDate           ISO 'YYYY-MM-DD'
  * @property {string} context               M9
@@ -18,14 +21,6 @@ import { normaliseHistory } from './history.js';
  * @property {Array<{context: string, contextTool: string|null, savedAt: string|null}>} contextHistory
  *           M12, earlier context versions, newest first (optional, default [])
  */
-
-/** New unique task id (FR-M5-03). */
-export function createId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
@@ -47,8 +42,8 @@ export function normaliseTask(raw, today) {
     description: typeof raw.description === 'string' ? raw.description : '',
     type: TYPE_IDS.includes(raw.type) ? raw.type : 'feature',
     status: STAGE_IDS.includes(raw.status) ? raw.status : 'todo',
-    // DR-INT-05: keep an unknown assignee as stored; the UI shows "Unassigned".
-    assignee: typeof raw.assignee === 'string' ? raw.assignee : '',
+    // DR-INT-05: keep an unknown assignee id as stored; the UI shows "Unassigned".
+    assignee: typeof raw.assignee === 'string' && raw.assignee ? raw.assignee : null,
     dueDate: isISODate(raw.dueDate) ? raw.dueDate : null,
     createdDate: isISODate(raw.createdDate) ? raw.createdDate : today,
     context: typeof raw.context === 'string' ? raw.context : '',
@@ -88,11 +83,6 @@ export function normaliseTasks(raw, today) {
   return { ok: true, tasks, dropped };
 }
 
-/** True when `assignee` is a current team member (FR-M7-05). */
-export function isKnownAssignee(assignee) {
-  return TEAM.includes(assignee);
-}
-
 /**
  * Card order inside a column (FR-M4-11): due date ascending, tasks without a
  * due date last, ties broken by createdDate (oldest first).
@@ -108,10 +98,12 @@ export function compareTasks(a, b) {
 }
 
 /**
- * Seed tasks for the first load (FR-M4-03, DR-SEED-01/02).
- * Dates are relative to `today`, so the due states stay correct.
+ * Starter tasks for a new board (FR-M4-03, DR-SEED-01/02). Dates are
+ * relative to `today`, so the due states stay correct. The tasks go round
+ * the given member ids; with no ids they are Unassigned.
  */
-export function buildSeedTasks(today) {
+export function buildSeedTasks(today, memberIds = []) {
+  const owner = (i) => (memberIds.length ? memberIds[i % memberIds.length] : null);
   const base = { description: '', context: '', contextTool: null, contextUpdatedAt: null, contextHistory: [] };
   return [
     {
@@ -120,7 +112,7 @@ export function buildSeedTasks(today) {
       title: 'Show the four stages as columns on the board',
       type: 'feature',
       status: 'in-progress',
-      assignee: TEAM[0],
+      assignee: owner(0),
       dueDate: addDays(today, 1),
       createdDate: addDays(today, -2),
     },
@@ -130,7 +122,7 @@ export function buildSeedTasks(today) {
       title: 'Long card titles push the stage controls off the card',
       type: 'bug',
       status: 'todo',
-      assignee: TEAM[1],
+      assignee: owner(1),
       dueDate: addDays(today, -1),
       createdDate: addDays(today, -3),
     },
@@ -140,7 +132,7 @@ export function buildSeedTasks(today) {
       title: 'Write the template for "Copy as Prompt Context"',
       type: 'feature',
       status: 'review',
-      assignee: TEAM[2],
+      assignee: owner(2),
       dueDate: addDays(today, 4),
       createdDate: addDays(today, -1),
     },
@@ -150,7 +142,7 @@ export function buildSeedTasks(today) {
       title: 'Choose the colour tokens and fonts',
       type: 'feature',
       status: 'done',
-      assignee: TEAM[1],
+      assignee: owner(3),
       dueDate: addDays(today, -2),
       createdDate: addDays(today, -4),
     },

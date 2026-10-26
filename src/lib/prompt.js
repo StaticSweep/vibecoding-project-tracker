@@ -1,7 +1,7 @@
 import { STAGES, TYPES } from './constants.js';
 import { formatDueLabel } from './dates.js';
 import { hasContext } from './context.js';
-import { isKnownAssignee } from './tasks.js';
+import { findMember, memberWithRole } from './team.js';
 
 /**
  * "Copy as Prompt Context" serialisation (M10 copy-prompt, FR-M10-02/07/08).
@@ -9,17 +9,26 @@ import { isKnownAssignee } from './tasks.js';
  * A pure function: the same task and dates always give the same text.
  * Empty fields are left out cleanly — the output never contains
  * "undefined", "null" or empty headings. The context is copied verbatim.
+ *
+ * Options:
+ *   today      'YYYY-MM-DD', for the relative due label
+ *   team       Member[], so the owner shows with their role — the AI can
+ *              pitch its answer at a junior developer or an architect
+ *   workspace  { projectName }
+ *   anchors    Anchor[], listed when `includeLinks` is true (FR-M10-10)
  */
-export function taskToPrompt(task, { today } = {}) {
+export function taskToPrompt(task, { today, team = [], workspace, anchors = [], includeLinks = false } = {}) {
   const typeLabel = TYPES.find((t) => t.id === task.type)?.label ?? 'Feature';
   const stageLabel = STAGES.find((s) => s.id === task.status)?.label ?? 'To Do';
-  const owner = isKnownAssignee(task.assignee) ? task.assignee : 'Unassigned';
+  const owner = memberWithRole(findMember(team, task.assignee));
 
-  const facts = [
+  const facts = [];
+  if (workspace?.projectName?.trim()) facts.push(`- **Project:** ${workspace.projectName.trim()}`);
+  facts.push(
     `- **Type:** ${typeLabel}`,
     `- **Status:** ${stageLabel}`,
     `- **Owner:** ${owner}`,
-  ];
+  );
 
   if (task.dueDate) {
     const label = today ? formatDueLabel(task, today) : '';
@@ -45,6 +54,11 @@ export function taskToPrompt(task, { today } = {}) {
     ? task.context.replace(/\s+$/, '').replace(/^(#{1,5}) /gm, '#$1 ')
     : 'No context recorded yet.';
   sections.push(`## Context\n${context}`);
+
+  const links = includeLinks ? anchors.filter((a) => a.url) : [];
+  if (links.length > 0) {
+    sections.push(`## Deliverable links\n${links.map((a) => `- ${a.label}: ${a.url}`).join('\n')}`);
+  }
 
   sections.push(
     '## What I need from you\n' +
