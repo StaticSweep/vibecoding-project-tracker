@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { getDueState, todayISO } from './lib/dates.js';
-import { createId } from './lib/tasks.js';
+import { createId, matchesFilters } from './lib/tasks.js';
 import { endSentence, findMember } from './lib/team.js';
 import { nextContextUpdatedAt } from './lib/context.js';
 import { nextHistory } from './lib/history.js';
-import { glassPanel } from './lib/ui.js';
+import { focusRing, glassPanel } from './lib/ui.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
 import { AppDataProvider, useAppData } from './context/AppData.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
@@ -129,11 +129,8 @@ function Tracker() {
           contextHistory: [],
         },
       ]);
-      // Do not hide the new task behind an active filter.
-      const hidden =
-        (filters.type !== 'all' && filters.type !== fields.type) ||
-        (filters.owner !== 'all' && filters.owner !== (findMember(team, fields.assignee) ? fields.assignee : 'unassigned'));
-      if (hidden) setFilters(NO_FILTERS);
+      // Do not hide the new task behind an active filter or search.
+      if (!matchesFilters(fields, filters, team)) setFilters(NO_FILTERS);
     } else {
       setTasks((list) =>
         list.map((t) =>
@@ -206,8 +203,18 @@ function Tracker() {
   const overdueCount = tasks.filter((t) => getDueState(t, today) === 'overdue').length;
 
   return (
-    <div className="relative isolate flex h-screen flex-col overflow-hidden bg-surface-page font-sans text-ink">
+    // Small screens and high zoom: the page scrolls. From 768 px: an app
+    // shell where only the columns scroll (FR-M4-12).
+    <div className="relative isolate flex min-h-screen flex-col bg-surface-page font-sans text-ink md:h-screen md:overflow-hidden">
       <GlassBackdrop />
+
+      {/* Skip link: the first Tab stop (WCAG 2.4.1). */}
+      <a
+        href="#board"
+        className={`sr-only z-50 rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-on-brand focus:not-sr-only focus:fixed focus:left-4 focus:top-4 ${focusRing}`}
+      >
+        Skip to the board
+      </a>
 
       <Header
         filters={filters}
@@ -227,11 +234,16 @@ function Tracker() {
 
       <WelcomeCard onSetUpTeam={() => setSettingsTab('team')} />
 
-      <div className="shrink-0 overflow-x-auto">
+      <div className="shrink-0">
         <AnchorBoard anchors={anchors} onChange={setAnchorUrl} />
       </div>
 
-      <main id="board" tabIndex={-1} aria-label="Board" className="min-h-0 flex-1 overflow-x-auto px-4 focus:outline-none">
+      <main
+        id="board"
+        tabIndex={-1}
+        aria-label="Board"
+        className="min-h-0 flex-1 rounded-3xl px-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-primary"
+      >
         <Board
           tasks={tasks}
           today={today}
@@ -243,7 +255,7 @@ function Tracker() {
         />
       </main>
 
-      <footer className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+      <footer aria-label="Data" className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <p className={`inline-block rounded-full px-4 py-1.5 text-caption text-ink-muted ${glassPanel}`}>
           Slopify keeps your data in this browser only. Export the board to share it or to keep a copy.
         </p>

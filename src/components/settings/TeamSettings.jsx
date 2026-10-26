@@ -215,7 +215,7 @@ function TeamSection() {
                   {member.email && (
                     <>
                       {' · '}
-                      <a href={`mailto:${member.email}`} className={`inline-flex items-center gap-1 rounded text-brand-primary underline-offset-2 hover:underline ${focusRing}`}>
+                      <a href={`mailto:${member.email}`} className={`inline-flex items-center gap-1 rounded text-brand-primary underline underline-offset-2 hover:decoration-2 ${focusRing}`}>
                         <Mail aria-hidden="true" className="h-3.5 w-3.5" />
                         {member.email}
                       </a>

@@ -82,7 +82,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-scrim/30 p-6 backdrop-blur-sm reduce-transparency:bg-scrim/50 reduce-transparency:backdrop-blur-none"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-scrim/30 p-3 backdrop-blur-sm sm:p-6 reduce-transparency:bg-scrim/50 reduce-transparency:backdrop-blur-none"
       onMouseDown={(e) => {
         if (e.target !== e.currentTarget) return;
         // Stop the browser from moving focus to <body> after we restore it.
@@ -98,7 +98,7 @@ export default function Modal({
         aria-describedby={describedBy}
         tabIndex={-1}
         onKeyDown={handleKeyDown}
-        className={`flex max-h-[calc(100vh-3rem)] w-full flex-col overflow-hidden rounded-3xl text-ink focus:outline-none ${glassSheet} ${className}`}
+        className={`flex max-h-[calc(100dvh-1.5rem)] w-full flex-col sm:max-h-[calc(100dvh-3rem)] overflow-hidden rounded-3xl text-ink focus:outline-none ${glassSheet} ${className}`}
       >
         {children}
       </div>

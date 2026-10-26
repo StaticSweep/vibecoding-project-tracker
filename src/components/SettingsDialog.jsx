@@ -3,11 +3,13 @@ import { X } from 'lucide-react';
 import Modal from './Modal.jsx';
 import DataSettings from './settings/DataSettings.jsx';
 import TeamSettings from './settings/TeamSettings.jsx';
+import AppearanceSettings from './settings/AppearanceSettings.jsx';
 import { focusRing, iconButton } from '../lib/ui.js';
 
 // Order = tab order. Each panel is a component with no props.
 const TABS = [
   { id: 'team', label: 'Project & team', Panel: TeamSettings },
+  { id: 'appearance', label: 'Accessibility & appearance', Panel: AppearanceSettings },
   { id: 'data', label: 'Data', Panel: DataSettings },
 ];
 
@@ -39,7 +41,7 @@ export default function SettingsDialog({ initialTab = TABS[0].id, onClose, retur
 
   return (
     <Modal labelledBy={headingId} onRequestClose={onClose} returnFocus={returnFocus} className="max-w-[48rem]">
-      <div className="flex items-center justify-between gap-4 border-b border-line-subtle px-6 py-4">
+      <div className="flex items-center justify-between gap-4 border-b border-line-subtle px-4 py-4 sm:px-6">
         <h2 id={headingId} className="font-heading text-xl font-semibold leading-7">
           Settings
         </h2>
@@ -80,7 +82,7 @@ export default function SettingsDialog({ initialTab = TABS[0].id, onClose, retur
         id={`${baseId}-panel`}
         aria-labelledby={`${baseId}-tab-${active}`}
         tabIndex={0}
-        className={`min-h-0 flex-1 overflow-y-auto px-6 py-5 ${focusRing} focus-visible:ring-inset focus-visible:ring-offset-0`}
+        className={`min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 ${focusRing} focus-visible:ring-inset focus-visible:ring-offset-0`}
       >
         <Panel />
       </div>

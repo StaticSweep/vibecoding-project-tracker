@@ -22,7 +22,7 @@ export default function SegmentedControl({ legend, hideLegend = false, options, 
         white thumb) so the selected state keeps ≥ 3:1 contrast (NFR-A11Y-01).
       */}
       <div
-        className={`${hideLegend ? '' : 'mt-1 '}inline-flex gap-0.5 rounded-full border border-line-strong bg-glass/75 p-0.5 backdrop-blur-xl reduce-transparency:bg-surface-card`}
+        className={`${hideLegend ? '' : 'mt-1 '}inline-flex max-w-full flex-wrap gap-0.5 rounded-[1.25rem] border border-line-strong bg-glass/75 p-0.5 backdrop-blur-xl reduce-transparency:bg-surface-card`}
       >
         {options.map((option) => {
           const Icon = option.icon;

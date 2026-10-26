@@ -84,6 +84,21 @@ export function normaliseTasks(raw, today) {
 }
 
 /**
+ * True when a task passes the board filters.
+ *   filters = { owner: 'all' | member id | 'unassigned', type: 'all' | type id, query: string }
+ * The search looks in the title, description and context, ignoring case.
+ */
+export function matchesFilters(task, { owner = 'all', type = 'all', query = '' }, team) {
+  if (type !== 'all' && task.type !== type) return false;
+  if (owner === 'unassigned' && team.some((m) => m.id === task.assignee)) return false;
+  if (owner !== 'all' && owner !== 'unassigned' && task.assignee !== owner) return false;
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+  const text = `${task.title}\n${task.description}\n${task.context}`.toLowerCase();
+  return words.every((w) => text.includes(w));
+}
+
+/**
  * Card order inside a column (FR-M4-11): due date ascending, tasks without a
  * due date last, ties broken by createdDate (oldest first).
  */

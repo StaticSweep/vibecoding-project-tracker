@@ -45,6 +45,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
   const promptOptions = usePromptOptions();
   const ids = {
     heading: useId(),
+    keysHelp: useId(),
     title: useId(),
     titleError: useId(),
     titleCount: useId(),
@@ -181,6 +182,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
     <>
       <Modal
         labelledBy={ids.heading}
+        describedBy={ids.keysHelp}
         onRequestClose={requestClose}
         initialFocusRef={titleRef}
         returnFocus={returnFocus}
@@ -188,10 +190,13 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
       >
         <form noValidate onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="flex min-h-0 flex-1 flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-line-subtle px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-subtle px-4 py-4 sm:px-6">
             <h2 id={ids.heading} className="font-heading text-xl font-semibold leading-7">
               {isEdit ? 'Edit task' : 'New task'}
             </h2>
+            <p id={ids.keysHelp} className="sr-only">
+              Press Control and Enter to save. Press Escape to close.
+            </p>
             <div className="flex items-center gap-2">
               {/* M10: copies what is in the form now, saved or not */}
               <CopyPromptButton getText={() => taskToPrompt(draftTask(), { today, ...promptOptions })} />
@@ -202,11 +207,11 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
           </div>
 
           {/* Body — scrolls when taller than the viewport (FR-M5-19) */}
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6">
             {/* Title */}
             <div>
               <label htmlFor={ids.title} className={labelBase}>
-                Title
+                Title <span className="font-normal text-ink-muted">(required)</span>
               </label>
               <input
                 ref={titleRef}
@@ -272,7 +277,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
               }))}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {/* Stage */}
               <div>
                 <label htmlFor={ids.status} className={labelBase}>
@@ -313,7 +318,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                     {owner.email && (
                       <a
                         href={`mailto:${owner.email}`}
-                        className={`inline-flex items-center gap-1 rounded font-semibold text-brand-primary underline-offset-2 hover:underline ${focusRing}`}
+                        className={`inline-flex items-center gap-1 rounded font-semibold text-brand-primary underline underline-offset-2 hover:decoration-2 ${focusRing}`}
                       >
                         <Mail aria-hidden="true" className="h-3.5 w-3.5" />
                         Contact {firstName(owner.name)}
@@ -393,7 +398,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                 )}
               </div>
 
-              <div className="flex items-end justify-between gap-4">
+              <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <label htmlFor={ids.tool} className={labelBase}>
                     Tool
@@ -437,7 +442,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
           </div>
 
           {/* Action bar — stays visible (FR-M5-12, DESIGN.md §4.8) */}
-          <div className="flex items-center justify-between gap-2 border-t border-line-subtle px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-subtle px-4 py-4 sm:px-6">
             <div>
               {isEdit && (
                 <button type="button" onClick={() => setConfirm('delete')} className={buttonDestructive}>

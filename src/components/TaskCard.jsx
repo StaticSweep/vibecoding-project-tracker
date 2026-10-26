@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, History, ScrollText } from 'lucide-react';
 import { hasContext, isContextStale } from '../lib/context.js';
 import { versionCount } from '../lib/history.js';
-import { STAGES } from '../lib/constants.js';
+import { STAGES, TYPES } from '../lib/constants.js';
 import { formatDueLabel, formatLongDate, getDueState } from '../lib/dates.js';
 import { DUE_STYLES } from '../lib/due.js';
 import { findMember, memberWithRole } from '../lib/team.js';
@@ -13,11 +13,21 @@ import Avatar from './Avatar.jsx';
 import CopyPromptButton from './CopyPromptButton.jsx';
 import { taskToPrompt } from '../lib/prompt.js';
 
+// Card shortcuts (NFR-USE-07, DESIGN.md §4.19), when focus is on the card's
+// title or icon buttons. Listed in the Help dialog.
+export const CARD_SHORTCUTS = [
+  { keys: '[', label: 'Move to the previous stage' },
+  { keys: ']', label: 'Move to the next stage' },
+  { keys: 'E', label: 'Edit the task' },
+  { keys: 'C', label: 'Copy as Prompt Context' },
+  { keys: 'H', label: 'Hand off to…' },
+];
+
 /**
  * One task on the board (DESIGN.md §4.3 / §4.4).
  */
 export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
-  const { team } = useAppData();
+  const { team, readOnly } = useAppData();
   const promptOptions = usePromptOptions();
   const stageIndex = STAGES.findIndex((s) => s.id === task.status);
   const prev = STAGES[stageIndex - 1];
@@ -32,8 +42,34 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
   const stale = isContextStale(task);
   const versions = versionCount(task);
   const titleId = `task-title-${task.id}`;
+  const summaryId = `task-summary-${task.id}`;
   const stageSelectId = `task-stage-${task.id}`;
   const ownerSelectId = `task-owner-${task.id}`;
+
+  // Everything the card shows, as one sentence for screen readers. The open
+  // button is named by the title and described by this summary.
+  const typeLabel = TYPES.find((t) => t.id === task.type)?.label ?? 'Feature';
+  const summary = [
+    typeLabel,
+    dueLabel,
+    `Owner: ${memberWithRole(owner)}`,
+    withContext && `${stale ? 'Old context' : 'Context'}${task.contextTool ? ` for ${task.contextTool}` : ''}${versions > 1 ? `, ${versions} versions` : ''}`,
+  ]
+    .filter(Boolean)
+    .join('. ');
+
+  function onKeyDown(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || ['SELECT', 'INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    const card = e.currentTarget;
+    const key = e.key.toLowerCase();
+    if (key === '[' && prev && !readOnly) onMove(task.id, prev.id, 'open');
+    else if (key === ']' && next && !readOnly) onMove(task.id, next.id, 'open');
+    else if (key === 'e') onOpen(task.id);
+    else if (key === 'c') card.querySelector('[data-control="copy"]')?.click();
+    else if (key === 'h') card.querySelector('[data-control="owner"]')?.focus();
+    else return;
+    e.preventDefault();
+  }
 
   return (
     <li>
@@ -41,6 +77,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
         data-task-id={task.id}
         tabIndex={-1}
         aria-labelledby={titleId}
+        onKeyDown={onKeyDown}
         className={`relative rounded-2xl border border-glass-edge/80 ${due.card} py-3 pl-5 pr-3 shadow-glass-sm backdrop-blur-xl transition-shadow duration-150 hover:shadow-glass focus-within:shadow-glass motion-reduce:transition-none reduce-transparency:backdrop-blur-none ${focusRing}`}
       >
         {/* Type stripe (FR-M6-01, DESIGN.md §2.2) — decoration; the badge carries the text. */}
@@ -60,7 +97,12 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             )}
             {/* M10: one click copies the task as a prompt (FR-M10-01) */}
             <div className="relative z-10 -my-1.5 shrink-0">
-              <CopyPromptButton variant="icon" getText={() => taskToPrompt(task, { today, ...promptOptions })} />
+              <CopyPromptButton
+                variant="icon"
+                dataControl="copy"
+                shortcut="C"
+                getText={() => taskToPrompt(task, { today, ...promptOptions })}
+              />
             </div>
           </div>
         </div>
@@ -75,11 +117,16 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             data-control="open"
             onClick={() => onOpen(task.id)}
             title={task.title}
+            aria-describedby={summaryId}
+            aria-keyshortcuts="[ ] E C H"
             className="block w-full cursor-pointer text-left after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand-primary"
           >
             <span className="line-clamp-2 break-words">{task.title}</span>
           </button>
         </h3>
+        <span id={summaryId} className="sr-only">
+          {summary}
+        </span>
 
         <div className="mt-2 flex items-center justify-between gap-2 text-sm text-ink-muted">
           {/*
@@ -97,6 +144,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
               data-control="owner"
               value={owner ? owner.id : ''}
               onChange={(e) => onHandOff(task.id, e.target.value || null)}
+              disabled={readOnly}
               title={owner ? `${memberWithRole(owner)} · Hand off to…` : 'Hand off to…'}
               className={`h-7 max-w-[9rem] truncate rounded-full border border-transparent bg-transparent pl-1.5 pr-5 text-sm text-ink hover:border-line-strong hover:bg-glass/80 ${focusRing}`}
             >
@@ -157,6 +205,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
             data-control="stage"
             value={task.status}
             onChange={(e) => onMove(task.id, e.target.value, 'stage')}
+            disabled={readOnly}
             className={`h-8 min-w-0 flex-1 rounded-full border border-line-strong bg-glass/80 px-3 text-sm text-ink ${focusRing}`}
           >
             {STAGES.map((s) => (
@@ -171,6 +220,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
               type="button"
               data-control="prev"
               onClick={() => onMove(task.id, prev.id, 'prev')}
+              disabled={readOnly}
               aria-label={`Move to ${prev.label}`}
               title={`Move to ${prev.label}`}
               className={iconButton}
@@ -186,6 +236,7 @@ export default function TaskCard({ task, today, onMove, onOpen, onHandOff }) {
               type="button"
               data-control="next"
               onClick={() => onMove(task.id, next.id, 'next')}
+              disabled={readOnly}
               aria-label={`Move to ${next.label}`}
               title={`Move to ${next.label}`}
               className={iconButton}

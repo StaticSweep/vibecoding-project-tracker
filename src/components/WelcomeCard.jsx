@@ -19,7 +19,7 @@ export default function WelcomeCard({ onSetUpTeam }) {
       className={`mx-4 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-3xl px-5 py-3 ${glassPanel}`}
     >
       <Sparkles aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-primary" />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-60">
         <h2 id="welcome-title" className="font-heading text-sm font-semibold leading-5 text-ink">
           Welcome to Slopify. Track the task. Keep the context.
         </h2>

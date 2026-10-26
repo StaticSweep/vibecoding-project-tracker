@@ -16,7 +16,7 @@ export default function AnchorBoard({ anchors, onChange }) {
 
   return (
     <section aria-labelledby={headingId} className={`mx-4 mb-3 rounded-3xl px-4 pb-3 pt-2.5 ${glassPanel}`}>
-      <div className="mb-2 flex items-baseline gap-2">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-2">
         <h2
           id={headingId}
           className="font-heading text-sm font-semibold uppercase leading-5 tracking-[0.05em] text-ink"
@@ -28,7 +28,7 @@ export default function AnchorBoard({ anchors, onChange }) {
           {linked} of {anchors.length} links added
         </p>
       </div>
-      <ul className="grid min-w-[1088px] grid-cols-4 gap-4">
+      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         {anchors.map((anchor) => (
           <AnchorSlot key={anchor.id} anchor={anchor} onChange={onChange} />
         ))}

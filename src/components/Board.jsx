@@ -1,26 +1,30 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { STAGES } from '../lib/constants.js';
-import { compareTasks } from '../lib/tasks.js';
-import { findMember } from '../lib/team.js';
+import { compareTasks, matchesFilters } from '../lib/tasks.js';
 import { useAppData } from '../context/AppData.jsx';
-import { glassPanel, iconButton } from '../lib/ui.js';
+import { focusRing, glassPanel, iconButton } from '../lib/ui.js';
 import TaskCard from './TaskCard.jsx';
 
 /**
  * The four-column Kanban board (M4 data-model, DESIGN.md §4.1).
- */
-/**
- * `filters.type` is 'all' or a type id (FR-M6-05); `filters.owner` is 'all',
- * a member id or 'unassigned' (FR-M7-08). Hidden tasks still count toward the
- * column total, so the count reads "1 of 3" while a filter is on.
+ *
+ * `filters` = { owner, type, query } (FR-M6-05, FR-M7-08, search). Hidden
+ * tasks still count toward the column total, so the count reads "1 of 3"
+ * while a filter is on.
+ *
+ * Layout reflows for zoom and small screens (WCAG 1.4.10, DESIGN.md §4.1):
+ *   < 768 px      one stage at a time, picked with the stage buttons
+ *   768–1279 px   columns side by side, scrolled sideways with snap
+ *   ≥ 1280 px     all four columns visible
  */
 export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, filters }) {
   const { team } = useAppData();
-  const { owner, type } = filters;
   // After a move, put the focus back on the same control of the moved card.
   const [focusRequest, setFocusRequest] = useState(null);
   const [announcement, setAnnouncement] = useState('');
+  // The one stage shown on small screens.
+  const [shownStage, setShownStage] = useState(STAGES[0].id);
 
   const columns = useMemo(
     () =>
@@ -29,18 +33,24 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, 
         return {
           ...stage,
           total: all.length,
-          tasks: all
-            .filter((t) => type === 'all' || t.type === type)
-            .filter((t) => {
-              if (owner === 'all') return true;
-              if (owner === 'unassigned') return !findMember(team, t.assignee);
-              return t.assignee === owner;
-            })
-            .sort(compareTasks),
+          tasks: all.filter((t) => matchesFilters(t, filters, team)).sort(compareTasks),
         };
       }),
-    [tasks, team, type, owner],
+    [tasks, team, filters],
   );
+
+  // Say how many tasks a filter leaves (not on the first render).
+  const visible = columns.reduce((n, c) => n + c.tasks.length, 0);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    setAnnouncement(`Showing ${visible} of ${tasks.length} tasks.`);
+    // Only when the filters change, not on every task edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   useEffect(() => {
     if (!focusRequest) return;
@@ -54,6 +64,7 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, 
     const task = tasks.find((t) => t.id === id);
     if (!task || task.status === status) return;
     onMove(id, status);
+    setShownStage(status); // on small screens, follow the card to its new stage
     setFocusRequest({ id, control });
     const label = STAGES.find((s) => s.id === status)?.label;
     setAnnouncement(`Moved "${task.title}" to ${label}.`);
@@ -61,11 +72,13 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, 
 
   return (
     <>
-      <div className="grid h-full min-w-[1088px] grid-cols-4 gap-4">
+      <StagePicker columns={columns} shown={shownStage} onShow={setShownStage} />
+      <div className="flex gap-4 md:h-full md:snap-x md:snap-mandatory md:overflow-x-auto md:pb-2 xl:grid xl:grid-cols-4 xl:overflow-visible xl:pb-0">
         {columns.map((column) => (
           <Column
             key={column.id}
             column={column}
+            shownOnSmall={column.id === shownStage}
             today={today}
             onMove={handleMove}
             onOpen={onOpen}
@@ -81,7 +94,32 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, 
   );
 }
 
-function Column({ column, today, onMove, onOpen, onAdd, onHandOff }) {
+/** Small screens only: choose which stage to show. */
+function StagePicker({ columns, shown, onShow }) {
+  return (
+    <div role="group" aria-label="Stage to show" className="mb-3 grid grid-cols-2 gap-1 sm:grid-cols-4 md:hidden">
+      {columns.map((column) => {
+        const pressed = column.id === shown;
+        return (
+          <button
+            key={column.id}
+            type="button"
+            aria-pressed={pressed}
+            onClick={() => onShow(column.id)}
+            className={`h-10 rounded-full px-3 text-sm font-semibold ${
+              pressed ? 'bg-brand-primary text-on-brand' : `text-ink hover:bg-brand-accent ${glassPanel}`
+            } ${focusRing}`}
+          >
+            {column.label} · {column.tasks.length}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Column({ column, shownOnSmall, today, onMove, onOpen, onAdd, onHandOff }) {
+  const { readOnly } = useAppData();
   const headingId = `column-${column.id}`;
   const count = column.tasks.length;
   const filtered = count < column.total;
@@ -89,7 +127,7 @@ function Column({ column, today, onMove, onOpen, onAdd, onHandOff }) {
   return (
     <section
       aria-labelledby={headingId}
-      className={`flex min-h-0 flex-col rounded-3xl ${glassPanel}`}
+      className={`${shownOnSmall ? 'flex' : 'hidden'} w-full min-h-0 flex-col rounded-3xl md:flex md:w-[18rem] md:shrink-0 md:snap-start xl:w-auto ${glassPanel}`}
     >
       <header className="flex items-center justify-between px-4 pb-2 pt-3">
         <h2
@@ -107,9 +145,10 @@ function Column({ column, today, onMove, onOpen, onAdd, onHandOff }) {
           type="button"
           data-add-stage={column.id}
           onClick={() => onAdd(column.id)}
+          disabled={readOnly}
           aria-label={`Add task to ${column.label}`}
           title={`Add task to ${column.label}`}
-          className={iconButton}
+          className={`${iconButton} disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <Plus aria-hidden="true" className="h-4 w-4" />
         </button>
@@ -122,7 +161,7 @@ function Column({ column, today, onMove, onOpen, onAdd, onHandOff }) {
             : 'No tasks here. Add a task or move a task to this stage.'}
         </div>
       ) : (
-        <ul className="flex-1 space-y-2.5 overflow-y-auto px-3 pb-3 pt-0.5">
+        <ul className="flex-1 space-y-2.5 px-3 pb-3 pt-0.5 md:overflow-y-auto">
           {column.tasks.map((task) => (
             <TaskCard
               key={task.id}

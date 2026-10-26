@@ -1,5 +1,5 @@
-import { useId } from 'react';
-import { ListFilter, Plus, Settings, TriangleAlert, UserRound, X } from 'lucide-react';
+import { useId, useState } from 'react';
+import { ChevronDown, ListFilter, Plus, Settings, TriangleAlert, UserRound, X } from 'lucide-react';
 import Avatar from './Avatar.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
 import { useAppData } from '../context/AppData.jsx';
@@ -7,12 +7,13 @@ import { TYPES } from '../lib/constants.js';
 import { TYPE_STYLES } from '../lib/types.js';
 import { buttonPrimary, buttonSecondary, focusRing, glassPanel } from '../lib/ui.js';
 
-export const NO_FILTERS = { owner: 'all', type: 'all' };
+export const NO_FILTERS = { owner: 'all', type: 'all', query: '' };
 
 /**
  * App header (DESIGN.md §4.14): a floating glass bar with two rows.
  *   Row 1 — wordmark, project and team, Add task, the team lead, Settings.
  *   Row 2 — filters: My tasks, owner, type, overdue count, Clear filters.
+ *           On small screens the row folds away behind a "Filters" button.
  *
  * There is no sign-in. The lead's name shows as "you", and the button opens
  * the team settings.
@@ -20,9 +21,11 @@ export const NO_FILTERS = { owner: 'all', type: 'all' };
 export default function Header({ filters, onFiltersChange, overdueCount, onAdd, onOpenSettings, addButtonRef }) {
   const { workspace, team, lead, readOnly } = useAppData();
   const ownerId = useId();
+  const filtersId = useId();
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const setFilter = (key, value) => onFiltersChange({ ...filters, [key]: value });
   const mine = lead && filters.owner === lead.id;
-  const filtered = filters.owner !== 'all' || filters.type !== 'all';
+  const activeCount = [filters.owner !== 'all', filters.type !== 'all', filters.query.trim() !== ''].filter(Boolean).length;
   const subtitle = [workspace.projectName, workspace.teamName].filter((s) => s?.trim()).join(' · ');
 
   return (
@@ -67,13 +70,26 @@ export default function Header({ filters, onFiltersChange, overdueCount, onAdd, 
             <Settings aria-hidden="true" className="h-4 w-4" />
             Settings
           </button>
+          {/* Small screens: the filter row folds away behind this button. */}
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            aria-controls={filtersId}
+            onClick={() => setFiltersOpen((open) => !open)}
+            className={`${buttonSecondary} md:hidden`}
+          >
+            <ListFilter aria-hidden="true" className="h-4 w-4" />
+            Filters{activeCount ? ` (${activeCount})` : ''}
+            <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+          </button>
         </div>
       </div>
 
       <div
+        id={filtersId}
         role="group"
         aria-label="Filter the board"
-        className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-glass-edge/70 px-5 py-2"
+        className={`${filtersOpen ? 'flex' : 'hidden'} flex-wrap items-center gap-x-3 gap-y-2 border-t border-glass-edge/70 px-5 py-2 md:flex`}
       >
         {lead && (
           <button
@@ -142,7 +158,7 @@ export default function Header({ filters, onFiltersChange, overdueCount, onAdd, 
           </p>
         )}
 
-        {filtered && (
+        {activeCount > 0 && (
           <button
             type="button"
             onClick={() => onFiltersChange(NO_FILTERS)}
