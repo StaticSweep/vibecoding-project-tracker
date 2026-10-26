@@ -42,6 +42,8 @@ Each task carries the prompt context that produced it, so any teammate can click
 
 Locked. Do not change without team agreement.
 
+> **Changed in schema v3 (client Q&A, §15).** The team is stored data, not three fixed names. `Task.assignee` holds a `Member` id, and `null` means Unassigned. A migration converts older boards and keeps every owner.
+
 ```js
 // A single vibecoding task.
 Task = {
@@ -50,7 +52,7 @@ Task = {
   description: string,
   type: 'feature' | 'bug',       // visual color coding
   status: 'todo' | 'in-progress' | 'review' | 'done',
-  assignee: string,              // one of the three teammate names from §8
+  assignee: string | null,       // v3: a Member id (§8); null = Unassigned
   dueDate: string | null,        // ISO date 'YYYY-MM-DD'
   createdDate: string,           // ISO date 'YYYY-MM-DD'
 
@@ -72,6 +74,22 @@ Anchor = {
   id: 'presentation' | 'demo' | 'report' | 'documentation',
   label: string,                 // human-readable
   url: string | null,            // the link the team pastes in
+}
+
+// v3: one team member (§8). Managed in Settings → Project & team.
+Member = {
+  id: string,
+  name: string,                  // 1–40 characters, unique (case-insensitive)
+  email: string | null,          // for contact only; Slopify never sends email
+  role: 'swe' | 'architect' | 'senior' | 'junior' | 'ux' | 'database' | 'other' | null,
+  createdAt: string | null,      // ISO timestamp
+}
+
+// v3: the one project and its one team.
+Workspace = {
+  projectName: string,
+  teamName: string,
+  leadId: string | null,         // the team lead; Slopify always acts as the lead
 }
 ```
 
@@ -106,7 +124,7 @@ Fill these in before tagging `prd-done`:
 | Teammate B | `<TODO>` | `<TODO>` |
 | Teammate C | `<TODO>` | `<TODO>` |
 
-These three names become the **only** allowed values for `Task.assignee`. No auth — just a dropdown.
+**Changed after the client Q&A (§15).** The team is no longer fixed in code. Add, edit and remove members (name, email, role) in **Settings → Project & team**. One member is the **team lead**. There is no sign-in: Slopify always acts as the team lead. A new board starts with three placeholder members; rename them.
 
 ## 9. Milestone ownership
 
@@ -173,11 +191,10 @@ On the board, each card shows how many versions its prompt has (for example "Cla
 
 ## 12. Out of scope (do not build)
 
-- Authentication / accounts.
+- Authentication / accounts. There is no sign-in: Slopify always acts as the team lead (client decision, §15).
 - Real GitHub integration.
 - A real backend / shared database.
-- Mobile responsive — desktop only is fine.
-- Multi-team support.
+- Multi-team support and multiple projects (client: "one project for one team first").
 - Real-time collaboration.
 
 ## 13. Definition of done
@@ -224,7 +241,7 @@ These principles are the tie-breaker whenever a requirement below is ambiguous.
 - [x] **FR-APP-04** · Must — The primary "+" (add task) action is visible in the header at all times without scrolling.
 - [x] **FR-APP-05** · Must — One shared toast component is used for all notifications: appears bottom-centre or bottom-right, 200 ms fade in/out, auto-dismisses after 3–4 s, can be dismissed manually, announced via an `aria-live="polite"` region. At most 3 toasts stack at once.
 - [x] **FR-APP-06** · Should — One shared confirm dialog is used for every destructive action (delete, reset, load demo data), with focus defaulting to **Cancel**.
-- [ ] **FR-APP-07** · Could — Favicon matching the wordmark.
+- [x] **FR-APP-07** · Could — Favicon matching the wordmark.
 
 #### M4 `data-model` — Board view
 
@@ -265,7 +282,7 @@ These principles are the tie-breaker whenever a requirement below is ambiguous.
 
 - [x] **FR-M5-12** · Must — A Delete action is available in edit mode only, visually separated from Save (e.g. bottom-left vs. bottom-right) and styled as destructive.
 - [x] **FR-M5-13** · Must — Delete asks for confirmation using the DESIGN.md §5 confirm-delete copy. Confirming removes the task and persists the change.
-- [ ] **FR-M5-14** · Could — After deletion, a toast offers **Undo** for 5 s.
+- [x] **FR-M5-14** · Could — After deletion, a toast offers **Undo** for 5 s.
 
 *Modal behaviour*
 
@@ -343,7 +360,7 @@ Due state is computed from date-only values in the user's **local** timezone, co
 - [x] **FR-M10-07** · Should — Serialisation lives in a pure helper, e.g. `taskToPrompt(task)`, separate from UI code so it is easy to tweak and test.
 - [x] **FR-M10-08** · Should — A task with no context still copies its details plus the line "No context recorded yet."
 - [x] **FR-M10-09** · Could — A preview of the output in the modal before copying.
-- [ ] **FR-M10-10** · Could — Option to append the Anchor Board links to the prompt.
+- [x] **FR-M10-10** · Could — Option to append the Anchor Board links to the prompt.
 
 Default template (Person C refines this while M4/M5 are built — see §9):
 
@@ -388,20 +405,20 @@ Continue this task from where the context leaves off. Ask before changing anythi
 
 #### M13 `pitch-ready` — Demo dataset & rehearsal
 
-- [ ] **FR-M13-01** · Must — A demo dataset of 8–12 realistic tasks covers all four columns, both types, all three teammates, every due state (overdue, warning, safe, no date, done), at least 3 tasks with rich curated context from real hackathon work, and at least 2 filled anchors.
-- [ ] **FR-M13-02** · Must — Demo due dates are generated **relative to today** (e.g. today − 2, today + 1, today + 5) so tints are correct on pitch day.
-- [ ] **FR-M13-03** · Must — A "Load demo data" action (e.g. in a footer menu) replaces the current data only after confirmation.
+- [x] **FR-M13-01** · Must — A demo dataset of 8–12 realistic tasks covers all four columns, both types, all three teammates, every due state (overdue, warning, safe, no date, done), at least 3 tasks with rich curated context from real hackathon work, and at least 2 filled anchors.
+- [x] **FR-M13-02** · Must — Demo due dates are generated **relative to today** (e.g. today − 2, today + 1, today + 5) so tints are correct on pitch day.
+- [x] **FR-M13-03** · Must — A "Load demo data" action (e.g. in a footer menu) replaces the current data only after confirmation.
 - [ ] **FR-M13-04** · Must — The pitch is rehearsed on the **deployed** Vercel build, not localhost; the deployed build loads with zero console errors.
-- [ ] **FR-M13-05** · Should — A "Reset board" action clears tasks and anchors after confirmation.
+- [x] **FR-M13-05** · Should — A "Reset board" action clears tasks and anchors after confirmation.
 
 #### Cross-cutting — Data safety & portability
 
 - [x] **FR-DATA-01** · Must — Loaded data is normalised: missing fields get defaults, an unknown `status` falls back to `todo`, an unknown `type` falls back to `feature`.
 - [x] **FR-DATA-02** · Must — Corrupted localStorage (invalid JSON or wrong shape) never produces a blank screen; the app starts with a safe state and shows a non-blocking notice.
 - [x] **FR-DATA-03** · Should — Before falling back, the corrupted raw value is copied to a backup key (e.g. `vibetracker.tasks.backup`) so it can be recovered.
-- [ ] **FR-DATA-04** · Should — **Export** downloads tasks + anchors as a JSON file — the only way to move a board between teammates' machines (see §14.6; format in §14.4.9).
-- [ ] **FR-DATA-05** · Could — **Import** a previously exported JSON file, with validation and a confirm-before-replace dialog.
-- [ ] **FR-DATA-06** · Could — Two open tabs stay in sync by listening to the `storage` event.
+- [x] **FR-DATA-04** · Should — **Export** downloads tasks + anchors as a JSON file — the only way to move a board between teammates' machines (see §14.6; format in §14.4.9).
+- [x] **FR-DATA-05** · Could — **Import** a previously exported JSON file, with validation and a confirm-before-replace dialog.
+- [x] **FR-DATA-06** · Could — Two open tabs stay in sync by listening to the `storage` event.
 
 ### 14.3 Non-functional requirements
 
@@ -432,7 +449,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 - [ ] **NFR-USE-12** · Must · *Fitts's law* — Interactive targets are at least 24 × 24 px; primary buttons at least 32 px tall; related controls grouped close to the content they act on.
 - [ ] **NFR-USE-13** · Should — **Hallway test:** someone outside the team completes the §4 primary flow without help. Record where they hesitate and fix the top 3 issues before `pitch-ready`.
 
-#### Accessibility (target: WCAG 2.2 AA, desktop)
+#### Accessibility (target: WCAG 2.2 AA; reflow down to 320 px since the client Q&A, §15)
 
 - [ ] **NFR-A11Y-01** · Must — Text contrast ≥ 4.5:1 (≥ 3:1 for large text); UI component boundaries and focus indicators ≥ 3:1. Check every DESIGN.md token pairing, **including text on tinted due-state cards**.
 - [ ] **NFR-A11Y-02** · Must — Colour is never the only carrier of meaning (WCAG 1.4.1): type, due state and owner all have text or icon equivalents.
@@ -442,8 +459,8 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 - [ ] **NFR-A11Y-06** · Must — Icon-only buttons have an `aria-label`; tooltips are never the only source of a label.
 - [ ] **NFR-A11Y-07** · Must — Form errors use `aria-invalid` and `aria-describedby`; toasts are announced through the live region (FR-APP-05).
 - [ ] **NFR-A11Y-08** · Should — If drag-and-drop exists, a single-pointer, non-drag alternative exists (WCAG 2.5.7) — satisfied by FR-M4-07.
-- [ ] **NFR-A11Y-09** · Should — `prefers-reduced-motion` disables the toast fade and any card transitions.
-- [ ] **NFR-A11Y-10** · Should — At 200% browser zoom on a 1280 px wide window, all content and functions remain usable (columns may scroll horizontally). Full 320 px reflow is out of scope per §12.
+- [x] **NFR-A11Y-09** · Should — `prefers-reduced-motion` disables the toast fade and any card transitions.
+- [x] **NFR-A11Y-10** · Should — At 200% browser zoom on a 1280 px wide window, all content and functions remain usable (columns may scroll horizontally). Full 320 px reflow is out of scope per §12.
 - [ ] **NFR-A11Y-11** · Should — Lighthouse Accessibility score ≥ 90 and zero critical issues in axe DevTools on the deployed build.
 
 #### UI & visual design
@@ -471,7 +488,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 - [ ] **NFR-REL-01** · Must — No data loss on reload, tab close or browser restart.
 - [x] **NFR-REL-02** · Must — A top-level React error boundary catches render errors and shows a friendly message with a "Reload" option instead of a white screen (Should: plus "Export my data").
 - [ ] **NFR-REL-03** · Must — Zero console errors or warnings (including React `key` warnings) in dev and production.
-- [ ] **NFR-REL-04** · Should — If localStorage is full or unavailable (quota exceeded, private mode), the user sees a notice that changes may not be saved. The current `useLocalStorage` hook ignores this silently — update it to report the failure.
+- [x] **NFR-REL-04** · Should — If localStorage is full or unavailable (quota exceeded, private mode), the user sees a notice that changes may not be saved. The current `useLocalStorage` hook ignores this silently — update it to report the failure.
 - [ ] **NFR-REL-05** · Must — The §5 data model is respected: no renamed or removed fields; additions are optional with defaults (see FR-DATA-01).
 
 #### Security & privacy
@@ -494,7 +511,7 @@ Mapped to Nielsen's usability heuristics so gaps are easy to spot in review.
 - [ ] **NFR-MAINT-03** · Must — `npm run build` succeeds before every milestone tag is pushed.
 - [x] **NFR-MAINT-04** · Should — Once `App.jsx` passes roughly 300 lines, split it into components (`Board`, `Column`, `TaskCard`, `TaskModal`, `AnchorBoard`, `Toast`, `ConfirmDialog`) and helpers (`src/lib/`).
 - [ ] **NFR-MAINT-05** · Should — Commit messages and the PRD stay current when behaviour changes. The Context field of the team's real tasks is kept up to date (feeds the Module 5 "Vibe Coding History" deliverable, §10).
-- [ ] **NFR-MAINT-06** · Could — Unit tests (Vitest) for the pure helpers in NFR-MAINT-02.
+- [x] **NFR-MAINT-06** · Could — Unit tests (Vitest) for the pure helpers in NFR-MAINT-02.
 
 ### 14.4 Data requirements
 
@@ -506,9 +523,11 @@ These requirements make the §5 data model concrete: where data is stored, what 
 |---|---|---|---|
 | `vibetracker.tasks` | All tasks | `Task[]` (JSON) | Must |
 | `vibetracker.anchors` | The four deliverable slots | `Anchor[]`, always length 4 (JSON) | Must |
+| `vibetracker.team` | Team members (v3) | `Member[]`, at least one (JSON) | Must |
+| `vibetracker.workspace` | Project name, team name, team lead (v3) | `Workspace` (JSON) | Must |
 | `vibetracker.meta` | Storage metadata | `{ schemaVersion: number }` (JSON) | Should |
 | `vibetracker.tasks.backup` / `vibetracker.anchors.backup` | Raw string of an unreadable value, kept for recovery | string | Should |
-| `vibetracker.prefs` | Per-browser UI preferences: last-used assignee, active filters | `{ lastAssignee?: string, filters?: object }` (JSON) | Could |
+| `vibetracker.prefs` | Per-browser settings, never exported | `{ theme, textSize, accent, motion, transparency, promptIncludesLinks, welcomeDismissed }` (JSON) | Should |
 
 - [x] **DR-STO-01** · Must — All keys use the `vibetracker.` prefix so the app's data is easy to find, export and reset, and never collides with other apps on the same origin.
 - [x] **DR-STO-02** · Must — Values are stored as JSON (UTF-8 text) via the `useLocalStorage` hook; no other storage mechanism (cookies, IndexedDB, sessionStorage) is used for app data.
@@ -600,18 +619,18 @@ The following are calculated from stored fields on every render and must **not**
 
 #### 14.4.7 Schema versioning & migration
 
-- [x] **DR-MIG-01** · Should — `vibetracker.meta.schemaVersion` records the data version. **v0** = tasks without context fields (pre-M9); **v1** = full §5 model.
+- [x] **DR-MIG-01** · Should — `vibetracker.meta.schemaVersion` records the data version. **v0** = tasks without context fields (pre-M9); **v1** = full §5 model; **v2** = adds `contextHistory` (M12); **v3** = team and workspace in storage, `assignee` is a member id (§15).
 - [x] **DR-MIG-02** · Must — On load, a single `migrate(data, fromVersion)` step upgrades older data before normalisation. Missing `meta` is treated as v0.
 - [x] **DR-MIG-03** · Must — Migrations are additive only (new fields with defaults) and idempotent; they never delete user content.
-- [ ] **DR-MIG-04** · Should — Data with a `schemaVersion` **newer** than the running app is not overwritten; the app shows a read-only notice ("This board was saved by a newer version").
+- [x] **DR-MIG-04** · Should — Data with a `schemaVersion` **newer** than the running app is not overwritten; the app shows a read-only notice ("This board was saved by a newer version").
 
 #### 14.4.8 Seed & demo data
 
 - [x] **DR-SEED-01** · Must — Seed tasks (FR-M4-03) live in one constant (e.g. `SEED_TASKS`) and pass every validation rule in §14.4.2.
 - [x] **DR-SEED-02** · Must — Seed and demo dates are generated **relative to today** at load time (e.g. `addDays(today, -2)`), never hard-coded calendar dates.
-- [ ] **DR-SEED-03** · Must — The demo dataset (FR-M13-01) lives in its own module (e.g. `src/data/demo.js`) and covers every enum value: both types, all four stages, all three teammates, all five due states, at least three `contextTool` values.
-- [ ] **DR-SEED-04** · Must — Demo content is realistic (real hackathon tasks and curated context) but contains no secrets, passwords or personal data beyond teammate names.
-- [ ] **DR-SEED-05** · Should — Placeholder anchor URLs in demo data point to real team deliverables, or are clearly marked placeholders (`https://example.com/...`) that are replaced before the pitch.
+- [x] **DR-SEED-03** · Must — The demo dataset (FR-M13-01) lives in its own module (e.g. `src/data/demo.js`) and covers every enum value: both types, all four stages, all three teammates, all five due states, at least three `contextTool` values.
+- [x] **DR-SEED-04** · Must — Demo content is realistic (real hackathon tasks and curated context) but contains no secrets, passwords or personal data beyond teammate names.
+- [x] **DR-SEED-05** · Should — Placeholder anchor URLs in demo data point to real team deliverables, or are clearly marked placeholders (`https://example.com/...`) that are replaced before the pitch.
 
 #### 14.4.9 Export & import format
 
@@ -620,23 +639,25 @@ Applies to FR-DATA-04 / FR-DATA-05.
 ```json
 {
   "app": "vibetracker",
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "exportedAt": "2026-10-20T14:32:00.000Z",
+  "workspace": { /* project name, team name, team lead */ },
+  "team": [ /* Member objects */ ],
   "tasks": [ /* Task objects exactly as stored */ ],
   "anchors": [ /* the four Anchor objects */ ]
 }
 ```
 
-- [ ] **DR-EXP-01** · Should — Export downloads a pretty-printed UTF-8 JSON file named `vibetracker-YYYY-MM-DD.json` in the format above, containing tasks and anchors exactly as stored.
-- [ ] **DR-EXP-02** · Should — Export never includes `vibetracker.prefs` or `.backup` keys.
-- [ ] **DR-IMP-01** · Could — Import accepts only files whose `app` is `"vibetracker"` and whose `schemaVersion` is less than or equal to the current version; anything else is rejected with a plain-language error.
-- [ ] **DR-IMP-02** · Could — Imported data goes through `migrate` and the §14.4.4 normalisation before use.
-- [ ] **DR-IMP-03** · Could — Before replacing data, the confirm dialog shows what will change ("Replace 7 tasks with 12 tasks?"), and the current data is offered as an export first.
+- [x] **DR-EXP-01** · Should — Export downloads a pretty-printed UTF-8 JSON file named `vibetracker-YYYY-MM-DD.json` in the format above, containing tasks and anchors exactly as stored.
+- [x] **DR-EXP-02** · Should — Export never includes `vibetracker.prefs` or `.backup` keys.
+- [x] **DR-IMP-01** · Could — Import accepts only files whose `app` is `"vibetracker"` and whose `schemaVersion` is less than or equal to the current version; anything else is rejected with a plain-language error.
+- [x] **DR-IMP-02** · Could — Imported data goes through `migrate` and the §14.4.4 normalisation before use.
+- [x] **DR-IMP-03** · Could — Before replacing data, the confirm dialog shows what will change ("Replace 7 tasks with 12 tasks?"), and the current data is offered as an export first.
 
 #### 14.4.10 Volume & capacity
 
 - [ ] **DR-CAP-01** · Must — The app is designed for up to **200 tasks** with contexts of up to **20,000 characters** each, while meeting NFR-PERF-01.
-- [ ] **DR-CAP-02** · Should — The serialised size of all `vibetracker.*` keys is estimated on save (string length × 2 bytes); above roughly 4 MB of the ~5 MB browser limit, the user sees a warning suggesting export and trimming old contexts.
+- [x] **DR-CAP-02** · Should — The serialised size of all `vibetracker.*` keys is estimated on save (string length × 2 bytes); above roughly 4 MB of the ~5 MB browser limit, the user sees a warning suggesting export and trimming old contexts.
 - [x] **DR-CAP-03** · Must — A failed write (quota exceeded) is reported to the user (NFR-REL-04) and in-memory state is kept, so nothing typed is lost before they can export.
 
 #### 14.4.11 Privacy & retention
@@ -666,6 +687,10 @@ Applies to FR-DATA-04 / FR-DATA-05.
 | 4 | localStorage is per-browser, per-device | A handoff is visible only on the machine where it was made; JSON export/import (FR-DATA-04/05, §14.4.9) is the workaround | **Agreed** |
 | 5 | Should Copy-as-Prompt include anchor links? | No (FR-M10-10 is a *Could*) | Open — decide in M10 |
 | 6 | Time pressure (≈3 h build window) | All *Must* items in milestone order, then *Should* items | Ongoing |
+| 7 | Login without a backend | No sign-in. Slopify always acts as the team lead | **Decided** by the client (§15) |
+| 8 | Renamed team members | `assignee` stores a member id (schema v3), so a rename keeps every task | **Decided** (§15) |
+| 9 | Mobile | Layout reflows to 320 px (WCAG 1.4.10), because accessibility is a top priority | **Decided** (§15) |
+| 10 | Should Copy-as-Prompt include anchor links? | Optional, off by default (Settings → Project & team) | **Closes #5** |
 
 ### 14.7 Traceability — milestone → requirements
 
@@ -682,7 +707,25 @@ Applies to FR-DATA-04 / FR-DATA-05.
 | M12 `secret-sauce` | FR-M12-01…05 | DR-INT-07, DR-LIFE-03 | All |
 | M13 `pitch-ready` | FR-M13-01…05, FR-DATA-04…05 | DR-SEED-03…05, DR-EXP-01…02, DR-IMP-01…03, DR-PRIV-01…04 | NFR-REL-03, NFR-USE-13, NFR-A11Y-11 |
 
+## 15. Client Q&A — refinement round
+
+The client answered our open questions after the 13 milestones. This table shows each answer and what changed.
+
+| Client answer | What Slopify does now |
+|---|---|
+| Extra features are "secret sauce" — finish the core milestones first | Open core items done first: Export / Import, Load demo data, Reset board, Undo delete, two-tab sync, read-only guard for newer data, storage meter |
+| One project for one team first | One workspace: project name + team name, editable in Settings |
+| Adding members to the team is needed | Settings → Project & team: add, edit and remove members; removing a member hands their tasks to someone else |
+| Store name and email; teams are small | `Member` = name, optional email (shown as a "Contact" link; nothing is sent), optional role. Built for about 1–15 people |
+| Target audience: SWE, architect, senior / junior developer, UX, database | A role per member; the copied prompt names the owner's role so the AI can pitch its answer; a Help dialog for new and junior members |
+| Any fonts / themes | The glass style stays; a dark theme and "match system" were added |
+| Accessibility is important — in design and in code | Text size 100 / 115 / 130 %, dark theme, reduce motion, reduce transparency, reflow to 320 px, skip link, card shortcuts, screen-reader card summaries, focus management, axe-core checks in both themes |
+| Accent: sensible default, user-definable as a bonus | Teal by default; Ocean, Graphite, Cocoa or a custom colour. Custom colours are adjusted until they pass WCAG AA |
+| Any popular web framework | React + Vite + Tailwind stay. Vitest added for the pure helpers (`npm test`) |
+| Security not important; login needed (without a backend) | **No sign-in.** Slopify always acts as the team lead. The lead is chosen in Settings |
+| Deployment needed for submission | Handled by the team; `npm run build` stays green |
+
 ---
 
-*PRD version: hackathon-starter v1 · maintained by Prof. Dr. Ignacio Alvarez*
+*PRD version: hackathon-starter v1 + client Q&A refinement · maintained by Prof. Dr. Ignacio Alvarez*
  
