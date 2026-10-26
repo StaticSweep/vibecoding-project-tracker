@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, FlaskConical, RotateCcw, Trash2, Upload } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import { useToast } from './Toast.jsx';
@@ -41,10 +41,14 @@ export default function DataTools({ variant = 'footer' }) {
     setConfirm({ import: result, fileName: file.name });
   }
 
-  /** Move focus to the board after its content was replaced. */
-  function focusBoard() {
-    window.requestAnimationFrame(() => document.getElementById('board')?.focus());
-  }
+  // Move focus to the board after its content was replaced. An effect runs
+  // after the confirm dialog's own focus return, so the board wins. In the
+  // Settings dialog, focus stays in the dialog.
+  const [focusBoardRequest, setFocusBoardRequest] = useState(0);
+  const focusBoard = () => setFocusBoardRequest((n) => n + 1);
+  useEffect(() => {
+    if (focusBoardRequest && variant === 'footer') document.getElementById('board')?.focus();
+  }, [focusBoardRequest, variant]);
 
   function confirmImport() {
     const { import: result } = confirm;

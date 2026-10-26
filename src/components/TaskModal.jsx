@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Clock, FilePlus2, Trash2, TriangleAlert, X } from 'lucide-react';
+import { Clock, FilePlus2, Mail, Trash2, TriangleAlert, X } from 'lucide-react';
 import Modal from './Modal.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
@@ -10,12 +10,13 @@ import { TYPE_STYLES } from '../lib/types.js';
 import { CONTEXT_TOOLS, DESCRIPTION_MAX, STAGES, TITLE_MAX, TYPES } from '../lib/constants.js';
 import { CONTEXT_TEMPLATE, CONTEXT_WARN_LENGTH } from '../lib/context.js';
 import { formatLongDateTime, formatTimeAgo } from '../lib/dates.js';
-import { findMember } from '../lib/team.js';
+import { findMember, firstName, roleLabel } from '../lib/team.js';
 import { useAppData, usePromptOptions } from '../context/AppData.jsx';
 import {
   buttonDestructive,
   buttonPrimary,
   buttonSecondary,
+  focusRing,
   helperText,
   iconButton,
   inputBase,
@@ -51,6 +52,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
     descriptionCount: useId(),
     status: useId(),
     assignee: useId(),
+    assigneeInfo: useId(),
     due: useId(),
     dueHint: useId(),
     context: useId(),
@@ -169,6 +171,8 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
     }
   }
 
+  const owner = findMember(team, form.assignee);
+  const ownerRole = roleLabel(owner?.role);
   const showTitleCount = form.title.length >= TITLE_MAX * COUNTER_FROM;
   const showDescriptionCount = form.description.length >= DESCRIPTION_MAX * COUNTER_FROM;
   const dueInPast = !isEdit && form.dueDate && form.dueDate < today; // FR-M8-07
@@ -290,8 +294,9 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                 </label>
                 <select
                   id={ids.assignee}
-                  value={findMember(team, form.assignee) ? form.assignee : ''}
+                  value={owner ? form.assignee : ''}
                   onChange={set('assignee')}
+                  aria-describedby={owner && ownerRole ? ids.assigneeInfo : undefined}
                   className={`${inputBase} mt-1 h-10`}
                 >
                   <option value="">Unassigned</option>
@@ -301,6 +306,21 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                     </option>
                   ))}
                 </select>
+                {/* The owner's role and a contact link (Q&A: name + email). */}
+                {owner && (ownerRole || owner.email) && (
+                  <p className={`mt-1 flex flex-wrap items-center gap-x-2 ${helperText}`}>
+                    {ownerRole && <span id={ids.assigneeInfo}>{ownerRole}</span>}
+                    {owner.email && (
+                      <a
+                        href={`mailto:${owner.email}`}
+                        className={`inline-flex items-center gap-1 rounded font-semibold text-brand-primary underline-offset-2 hover:underline ${focusRing}`}
+                      >
+                        <Mail aria-hidden="true" className="h-3.5 w-3.5" />
+                        Contact {firstName(owner.name)}
+                      </a>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
 

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { STAGES } from '../lib/constants.js';
 import { compareTasks } from '../lib/tasks.js';
+import { findMember } from '../lib/team.js';
+import { useAppData } from '../context/AppData.jsx';
 import { glassPanel, iconButton } from '../lib/ui.js';
 import TaskCard from './TaskCard.jsx';
 
@@ -9,11 +11,13 @@ import TaskCard from './TaskCard.jsx';
  * The four-column Kanban board (M4 data-model, DESIGN.md §4.1).
  */
 /**
- * `typeFilter` is 'all' or a type id (FR-M6-05); `ownerFilter` is 'all' or a
- * teammate name (FR-M7-08). Hidden tasks still count
- * toward the column total, so the count reads "1 of 3" while a filter is on.
+ * `filters.type` is 'all' or a type id (FR-M6-05); `filters.owner` is 'all',
+ * a member id or 'unassigned' (FR-M7-08). Hidden tasks still count toward the
+ * column total, so the count reads "1 of 3" while a filter is on.
  */
-export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, typeFilter = 'all', ownerFilter = 'all' }) {
+export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, filters }) {
+  const { team } = useAppData();
+  const { owner, type } = filters;
   // After a move, put the focus back on the same control of the moved card.
   const [focusRequest, setFocusRequest] = useState(null);
   const [announcement, setAnnouncement] = useState('');
@@ -26,12 +30,16 @@ export default function Board({ tasks, today, onMove, onOpen, onAdd, onHandOff, 
           ...stage,
           total: all.length,
           tasks: all
-            .filter((t) => typeFilter === 'all' || t.type === typeFilter)
-            .filter((t) => ownerFilter === 'all' || t.assignee === ownerFilter)
+            .filter((t) => type === 'all' || t.type === type)
+            .filter((t) => {
+              if (owner === 'all') return true;
+              if (owner === 'unassigned') return !findMember(team, t.assignee);
+              return t.assignee === owner;
+            })
             .sort(compareTasks),
         };
       }),
-    [tasks, typeFilter, ownerFilter],
+    [tasks, team, type, owner],
   );
 
   useEffect(() => {

@@ -1,20 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { ListFilter, Plus, Settings, TriangleAlert } from 'lucide-react';
-import { TYPES } from './lib/constants.js';
-import { TYPE_STYLES } from './lib/types.js';
 import { getDueState, todayISO } from './lib/dates.js';
 import { createId } from './lib/tasks.js';
-import { findMember } from './lib/team.js';
+import { endSentence, findMember } from './lib/team.js';
 import { nextContextUpdatedAt } from './lib/context.js';
 import { nextHistory } from './lib/history.js';
-import { buttonPrimary, buttonSecondary, focusRing, glassPanel } from './lib/ui.js';
+import { glassPanel } from './lib/ui.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
 import { AppDataProvider, useAppData } from './context/AppData.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Board from './components/Board.jsx';
 import AnchorBoard from './components/AnchorBoard.jsx';
 import TaskModal from './components/TaskModal.jsx';
-import SegmentedControl from './components/SegmentedControl.jsx';
+import Header, { NO_FILTERS } from './components/Header.jsx';
+import WelcomeCard from './components/WelcomeCard.jsx';
 import SettingsDialog from './components/SettingsDialog.jsx';
 import DataTools from './components/DataTools.jsx';
 
@@ -60,9 +58,9 @@ function Tracker() {
   const setAnchorUrl = (id, url) =>
     setAnchors((list) => list.map((a) => (a.id === id ? { ...a, url } : a))); // writes `url` only
 
-  // Board filters (FR-M6-05, FR-M7-08). UI-only state — not persisted (DR-STO-05).
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [ownerFilter, setOwnerFilter] = useState('all');
+  // Board filters (FR-M6-05, FR-M7-08): { owner: 'all' | member id |
+  // 'unassigned', type: 'all' | type id }. UI-only — not persisted (DR-STO-05).
+  const [filters, setFilters] = useState(NO_FILTERS);
 
   // Editor state: null | { mode: 'create', status } | { mode: 'edit', id }
   const [editor, setEditor] = useState(null);
@@ -99,8 +97,7 @@ function Tracker() {
   function announceHandOff(id, from, to) {
     const name = findMember(team, to)?.name ?? 'Unassigned';
     toast({
-      // Names like "Jo M." already end with a full stop.
-      message: `You gave this task to ${name}${name.endsWith('.') ? '' : '.'}`,
+      message: endSentence(`You gave this task to ${name}`),
       action: {
         label: 'Undo',
         onClick: () =>
@@ -133,8 +130,10 @@ function Tracker() {
         },
       ]);
       // Do not hide the new task behind an active filter.
-      if (typeFilter !== 'all' && typeFilter !== fields.type) setTypeFilter('all');
-      if (ownerFilter !== 'all' && ownerFilter !== fields.assignee) setOwnerFilter('all');
+      const hidden =
+        (filters.type !== 'all' && filters.type !== fields.type) ||
+        (filters.owner !== 'all' && filters.owner !== (findMember(team, fields.assignee) ? fields.assignee : 'unassigned'));
+      if (hidden) setFilters(NO_FILTERS);
     } else {
       setTasks((list) =>
         list.map((t) =>
@@ -210,85 +209,14 @@ function Tracker() {
     <div className="relative isolate flex h-screen flex-col overflow-hidden bg-surface-page font-sans text-ink">
       <GlassBackdrop />
 
-      {/* Floating glass navigation bar (DESIGN.md §2.6) */}
-      <header className={`mx-4 mb-3 mt-4 flex items-center justify-between gap-4 rounded-3xl px-5 py-3 ${glassPanel}`}>
-        <div>
-          <h1 className="font-heading text-wordmark font-semibold leading-8 tracking-tight text-brand-primary">
-            Slopify
-          </h1>
-          <p className="text-sm leading-5 text-ink-muted">Track the task. Keep the context.</p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {overdueCount > 0 && (
-            <p className="inline-flex h-8 items-center gap-1.5 rounded-full bg-due-overdue-bg px-3 text-sm font-semibold text-due-overdue-fg">
-              <TriangleAlert aria-hidden="true" className="h-4 w-4" />
-              {overdueCount} overdue
-            </p>
-          )}
-          {/* Owner filter (FR-M7-08) */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="owner-filter" className="text-sm font-semibold text-ink">
-              Owner
-            </label>
-            <select
-              id="owner-filter"
-              value={ownerFilter}
-              onChange={(e) => setOwnerFilter(e.target.value)}
-              className={`h-8 rounded-full border px-3 text-sm ${
-                ownerFilter === 'all'
-                  ? 'border-line-strong bg-glass/75 text-ink'
-                  : 'border-brand-primary bg-brand-accent font-semibold text-brand-primary'
-              } ${focusRing}`}
-            >
-              <option value="all">Everyone</option>
-              {team.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <SegmentedControl
-            legend="Show tasks of type"
-            hideLegend
-            size="sm"
-            value={typeFilter}
-            onChange={setTypeFilter}
-            options={[
-              { value: 'all', label: 'All', icon: ListFilter, selectedClass: 'bg-brand-primary text-on-brand' },
-              ...TYPES.map((t) => ({
-                value: t.id,
-                label: t.label,
-                icon: TYPE_STYLES[t.id].icon,
-                iconClass: TYPE_STYLES[t.id].iconClass,
-                selectedClass: TYPE_STYLES[t.id].selected,
-              })),
-            ]}
-          />
-          <button
-            ref={addButtonRef}
-            type="button"
-            onClick={() => openCreate()}
-            disabled={readOnly}
-            aria-keyshortcuts="N"
-            title="Add task (N)"
-            className={buttonPrimary}
-          >
-            <Plus aria-hidden="true" className="h-4 w-4" />
-            Add task
-          </button>
-          <button
-            type="button"
-            onClick={() => setSettingsTab('data')}
-            aria-haspopup="dialog"
-            className={buttonSecondary}
-          >
-            <Settings aria-hidden="true" className="h-4 w-4" />
-            Settings
-          </button>
-        </div>
-      </header>
+      <Header
+        filters={filters}
+        onFiltersChange={setFilters}
+        overdueCount={overdueCount}
+        onAdd={openCreate}
+        onOpenSettings={(tab = 'team') => setSettingsTab(tab)}
+        addButtonRef={addButtonRef}
+      />
 
       {/* DR-MIG-04: data from a newer Slopify is shown but never overwritten. */}
       {readOnly && (
@@ -296,6 +224,8 @@ function Tracker() {
           A newer version of Slopify saved this board. You can read it, but you cannot change it.
         </p>
       )}
+
+      <WelcomeCard onSetUpTeam={() => setSettingsTab('team')} />
 
       <div className="shrink-0 overflow-x-auto">
         <AnchorBoard anchors={anchors} onChange={setAnchorUrl} />
@@ -305,8 +235,7 @@ function Tracker() {
         <Board
           tasks={tasks}
           today={today}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
+          filters={filters}
           onMove={moveTask}
           onHandOff={handOff}
           onOpen={openEdit}

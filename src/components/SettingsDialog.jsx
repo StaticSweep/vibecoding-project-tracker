@@ -2,10 +2,14 @@ import { useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import Modal from './Modal.jsx';
 import DataSettings from './settings/DataSettings.jsx';
+import TeamSettings from './settings/TeamSettings.jsx';
 import { focusRing, iconButton } from '../lib/ui.js';
 
 // Order = tab order. Each panel is a component with no props.
-const TABS = [{ id: 'data', label: 'Data', Panel: DataSettings }];
+const TABS = [
+  { id: 'team', label: 'Project & team', Panel: TeamSettings },
+  { id: 'data', label: 'Data', Panel: DataSettings },
+];
 
 /**
  * Settings (DESIGN.md §4.18): one dialog, one tab per topic.

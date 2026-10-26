@@ -111,6 +111,11 @@ export function memberWithRole(member) {
   return role ? `${member.name} (${role})` : member.name;
 }
 
+/** End a sentence with a name: "Jo M." already ends with a full stop. */
+export function endSentence(text) {
+  return /[.!?]$/.test(text) ? text : `${text}.`;
+}
+
 /** "Sam K." → "Sam" — for short labels such as "Contact Sam". */
 export function firstName(name) {
   return name.split(/\s+/)[0] || name;
