@@ -455,7 +455,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
       {confirm === 'delete' && (
         <ConfirmDialog
           title="Delete this task?"
-          body="You cannot undo this."
+          body="You can undo this for 5 seconds."
           confirmLabel="Delete task"
           onConfirm={() => {
             setConfirm(null);

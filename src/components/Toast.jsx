@@ -8,10 +8,10 @@ import { focusRing } from '../lib/ui.js';
  *   const toast = useToast();
  *   toast({ message: 'Copied. Paste it into your AI tool.' });
  *   toast({ message: '…', tone: 'error' });
- *   toast({ message: '…', action: { label: 'Undo', onClick } });
+ *   toast({ message: '…', action: { label: 'Undo', onClick }, duration: 5000 });
  *
  * - Bottom right, max 3 at once (the oldest leaves first).
- * - 200 ms fade, closes after 4 s, close button on each toast.
+ * - 200 ms fade, closes after 4 s (or `duration`), close button on each toast.
  * - Announced through an aria-live="polite" region.
  */
 
@@ -36,9 +36,9 @@ export function ToastProvider({ children }) {
     }, FADE_MS);
   }, []);
 
-  const show = useCallback(({ message, tone = 'info', action = null }) => {
+  const show = useCallback(({ message, tone = 'info', action = null, duration = DURATION_MS }) => {
     const id = nextId.current++;
-    setToasts((list) => [...list, { id, message, tone, action, leaving: false }].slice(-MAX_TOASTS));
+    setToasts((list) => [...list, { id, message, tone, action, duration, leaving: false }].slice(-MAX_TOASTS));
     return id;
   }, []);
 
@@ -69,9 +69,9 @@ function ToastItem({ toast, onDismiss }) {
 
   // Auto-close.
   useEffect(() => {
-    const timer = window.setTimeout(() => onDismiss(toast.id), DURATION_MS);
+    const timer = window.setTimeout(() => onDismiss(toast.id), toast.duration);
     return () => window.clearTimeout(timer);
-  }, [toast.id, onDismiss]);
+  }, [toast.id, toast.duration, onDismiss]);
 
   const shown = visible && !toast.leaving;
 

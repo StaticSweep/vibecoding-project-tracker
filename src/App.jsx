@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ListFilter, Plus, TriangleAlert } from 'lucide-react';
+import { ListFilter, Plus, Settings, TriangleAlert } from 'lucide-react';
 import { TYPES } from './lib/constants.js';
 import { TYPE_STYLES } from './lib/types.js';
 import { getDueState, todayISO } from './lib/dates.js';
@@ -7,7 +7,7 @@ import { createId } from './lib/tasks.js';
 import { findMember } from './lib/team.js';
 import { nextContextUpdatedAt } from './lib/context.js';
 import { nextHistory } from './lib/history.js';
-import { buttonPrimary, focusRing, glassPanel } from './lib/ui.js';
+import { buttonPrimary, buttonSecondary, focusRing, glassPanel } from './lib/ui.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
 import { AppDataProvider, useAppData } from './context/AppData.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
@@ -15,6 +15,8 @@ import Board from './components/Board.jsx';
 import AnchorBoard from './components/AnchorBoard.jsx';
 import TaskModal from './components/TaskModal.jsx';
 import SegmentedControl from './components/SegmentedControl.jsx';
+import SettingsDialog from './components/SettingsDialog.jsx';
+import DataTools from './components/DataTools.jsx';
 
 /**
  * Slopify — Vibecoding Project Tracker.
@@ -54,7 +56,7 @@ function Tracker() {
   const toast = useToast();
   const today = useToday();
 
-  const { tasks, setTasks, anchors, setAnchors, team, lead } = useAppData();
+  const { tasks, setTasks, anchors, setAnchors, team, lead, readOnly } = useAppData();
   const setAnchorUrl = (id, url) =>
     setAnchors((list) => list.map((a) => (a.id === id ? { ...a, url } : a))); // writes `url` only
 
@@ -67,6 +69,9 @@ function Tracker() {
   const addButtonRef = useRef(null);
   const editingTask = editor?.mode === 'edit' ? tasks.find((t) => t.id === editor.id) : null;
 
+  // Settings dialog: null | the tab to open on.
+  const [settingsTab, setSettingsTab] = useState(null);
+
   const openCreate = (status = 'todo') => setEditor({ mode: 'create', status });
   const openEdit = (id) => setEditor({ mode: 'edit', id });
   const closeEditor = () => setEditor(null);
@@ -74,7 +79,8 @@ function Tracker() {
   // NFR-USE-07: "N" opens a new task when the user is not typing.
   useEffect(() => {
     function onKeyDown(e) {
-      if (editor || e.key.toLowerCase() !== 'n' || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key.toLowerCase() !== 'n' || e.ctrlKey || e.metaKey || e.altKey || readOnly) return;
+      if (document.querySelector('[aria-modal="true"]')) return; // a dialog is open
       const el = e.target;
       if (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) return;
       e.preventDefault();
@@ -82,7 +88,7 @@ function Tracker() {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [editor]);
+  }, [readOnly]);
 
   function moveTask(id, status) {
     setTasks((list) => list.map((t) => (t.id === id ? { ...t, status } : t)));
@@ -149,14 +155,47 @@ function Tracker() {
     closeEditor();
   }
 
+  // Delete with Undo for 5 s (FR-M5-14). Undo puts the task back in its old
+  // place, unless it is already back (e.g. undone twice).
+  const focusAfterDelete = useRef(null);
   function deleteTask(id) {
+    const index = tasks.findIndex((t) => t.id === id);
+    if (index === -1) return;
+    const removed = tasks[index];
+
+    // Focus goes to the next card in the column, else the previous one, else
+    // the column's "+" — not back to the top of the page.
+    const item = document.querySelector(`[data-task-id="${CSS.escape(id)}"]`)?.closest('li');
+    const neighbour = item?.nextElementSibling ?? item?.previousElementSibling;
+    focusAfterDelete.current =
+      neighbour?.querySelector('[data-control="open"]') ??
+      document.querySelector(`[data-add-stage="${CSS.escape(removed.status)}"]`);
+
     setTasks((list) => list.filter((t) => t.id !== id));
     closeEditor();
+    toast({
+      message: 'Task deleted.',
+      duration: 5000,
+      action: {
+        label: 'Undo',
+        onClick: () =>
+          setTasks((list) =>
+            list.some((t) => t.id === removed.id) ? list : [...list.slice(0, index), removed, ...list.slice(index)],
+          ),
+      },
+    });
   }
 
-  // Focus after the modal closes (FR-M5-15): the edited card (it may have
-  // moved column), else the opener, else the "Add task" button.
+  // Focus after the modal closes (FR-M5-15): after a delete, a neighbour card;
+  // else the edited card (it may have moved column), else the opener, else
+  // the "Add task" button.
   function returnFocus(previous) {
+    const afterDelete = focusAfterDelete.current;
+    focusAfterDelete.current = null;
+    if (afterDelete?.isConnected) {
+      afterDelete.focus();
+      return;
+    }
     const id = editor?.mode === 'edit' ? editor.id : null;
     const card = id && document.querySelector(`[data-task-id="${CSS.escape(id)}"] [data-control="open"]`);
     if (card) card.focus();
@@ -231,6 +270,7 @@ function Tracker() {
             ref={addButtonRef}
             type="button"
             onClick={() => openCreate()}
+            disabled={readOnly}
             aria-keyshortcuts="N"
             title="Add task (N)"
             className={buttonPrimary}
@@ -238,14 +278,30 @@ function Tracker() {
             <Plus aria-hidden="true" className="h-4 w-4" />
             Add task
           </button>
+          <button
+            type="button"
+            onClick={() => setSettingsTab('data')}
+            aria-haspopup="dialog"
+            className={buttonSecondary}
+          >
+            <Settings aria-hidden="true" className="h-4 w-4" />
+            Settings
+          </button>
         </div>
       </header>
+
+      {/* DR-MIG-04: data from a newer Slopify is shown but never overwritten. */}
+      {readOnly && (
+        <p role="status" className="mx-4 mb-3 rounded-2xl bg-due-warning-bg px-4 py-2 text-sm font-semibold text-due-warning-fg">
+          A newer version of Slopify saved this board. You can read it, but you cannot change it.
+        </p>
+      )}
 
       <div className="shrink-0 overflow-x-auto">
         <AnchorBoard anchors={anchors} onChange={setAnchorUrl} />
       </div>
 
-      <main className="min-h-0 flex-1 overflow-x-auto px-4">
+      <main id="board" tabIndex={-1} aria-label="Board" className="min-h-0 flex-1 overflow-x-auto px-4 focus:outline-none">
         <Board
           tasks={tasks}
           today={today}
@@ -258,11 +314,14 @@ function Tracker() {
         />
       </main>
 
-      <footer className="px-4 py-3">
+      <footer className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <p className={`inline-block rounded-full px-4 py-1.5 text-caption text-ink-muted ${glassPanel}`}>
           Slopify keeps your data in this browser only. Export the board to share it or to keep a copy.
         </p>
+        <DataTools variant="footer" />
       </footer>
+
+      {settingsTab && <SettingsDialog initialTab={settingsTab} onClose={() => setSettingsTab(null)} />}
 
       {editor && (editor.mode === 'create' || editingTask) && (
         <TaskModal
