@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Clock, FilePlus2, Trash2, TriangleAlert, X } from 'lucide-react';
+import { Clock, FilePlus2, Mail, Trash2, TriangleAlert, X } from 'lucide-react';
 import Modal from './Modal.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
@@ -7,14 +7,16 @@ import CopyPromptButton from './CopyPromptButton.jsx';
 import PromptHistory from './PromptHistory.jsx';
 import { taskToPrompt } from '../lib/prompt.js';
 import { TYPE_STYLES } from '../lib/types.js';
-import { CONTEXT_TOOLS, DESCRIPTION_MAX, STAGES, TEAM, TITLE_MAX, TYPES } from '../lib/constants.js';
+import { CONTEXT_TOOLS, DESCRIPTION_MAX, STAGES, TITLE_MAX, TYPES } from '../lib/constants.js';
 import { CONTEXT_TEMPLATE, CONTEXT_WARN_LENGTH } from '../lib/context.js';
 import { formatLongDateTime, formatTimeAgo } from '../lib/dates.js';
-import { isKnownAssignee } from '../lib/tasks.js';
+import { findMember, firstName, roleLabel } from '../lib/team.js';
+import { useAppData, usePromptOptions } from '../context/AppData.jsx';
 import {
   buttonDestructive,
   buttonPrimary,
   buttonSecondary,
+  focusRing,
   helperText,
   iconButton,
   inputBase,
@@ -39,8 +41,11 @@ const COUNTER_FROM = 0.8;
  */
 export default function TaskModal({ mode, task, defaults, today, onSave, onDelete, onClose, returnFocus }) {
   const isEdit = mode === 'edit';
+  const { team } = useAppData();
+  const promptOptions = usePromptOptions();
   const ids = {
     heading: useId(),
+    keysHelp: useId(),
     title: useId(),
     titleError: useId(),
     titleCount: useId(),
@@ -48,6 +53,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
     descriptionCount: useId(),
     status: useId(),
     assignee: useId(),
+    assigneeInfo: useId(),
     due: useId(),
     dueHint: useId(),
     context: useId(),
@@ -64,7 +70,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
             description: task.description,
             type: task.type,
             status: task.status,
-            assignee: task.assignee,
+            assignee: task.assignee ?? '',
             dueDate: task.dueDate ?? '',
             context: task.context ?? '',
             contextTool: task.contextTool ?? '',
@@ -74,7 +80,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
             description: '',
             type: 'feature',
             status: defaults.status,
-            assignee: defaults.assignee,
+            assignee: defaults.assignee ?? '',
             dueDate: '',
             context: '',
             contextTool: '',
@@ -111,7 +117,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
       description: form.description,
       type: form.type,
       status: form.status,
-      assignee: form.assignee,
+      assignee: form.assignee || null, // '' = Unassigned
       dueDate: form.dueDate || null, // DR: empty input → null, never ''
       context: form.context, // stored verbatim (FR-M9-08)
       contextTool: form.contextTool || null,
@@ -150,7 +156,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
       description: form.description,
       type: form.type,
       status: form.status,
-      assignee: form.assignee,
+      assignee: form.assignee || null,
       dueDate: form.dueDate || null,
       context: form.context,
       contextTool: form.contextTool || null,
@@ -166,6 +172,8 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
     }
   }
 
+  const owner = findMember(team, form.assignee);
+  const ownerRole = roleLabel(owner?.role);
   const showTitleCount = form.title.length >= TITLE_MAX * COUNTER_FROM;
   const showDescriptionCount = form.description.length >= DESCRIPTION_MAX * COUNTER_FROM;
   const dueInPast = !isEdit && form.dueDate && form.dueDate < today; // FR-M8-07
@@ -174,20 +182,24 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
     <>
       <Modal
         labelledBy={ids.heading}
+        describedBy={ids.keysHelp}
         onRequestClose={requestClose}
         initialFocusRef={titleRef}
         returnFocus={returnFocus}
-        className="max-w-[640px]"
+        className="max-w-[40rem]"
       >
         <form noValidate onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="flex min-h-0 flex-1 flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-line-subtle px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-subtle px-4 py-4 sm:px-6">
             <h2 id={ids.heading} className="font-heading text-xl font-semibold leading-7">
               {isEdit ? 'Edit task' : 'New task'}
             </h2>
+            <p id={ids.keysHelp} className="sr-only">
+              Press Control and Enter to save. Press Escape to close.
+            </p>
             <div className="flex items-center gap-2">
               {/* M10: copies what is in the form now, saved or not */}
-              <CopyPromptButton getText={() => taskToPrompt(draftTask(), { today })} />
+              <CopyPromptButton getText={() => taskToPrompt(draftTask(), { today, ...promptOptions })} />
               <button type="button" onClick={requestClose} aria-label="Close" className={iconButton}>
                 <X aria-hidden="true" className="h-5 w-5" />
               </button>
@@ -195,11 +207,11 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
           </div>
 
           {/* Body — scrolls when taller than the viewport (FR-M5-19) */}
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6">
             {/* Title */}
             <div>
               <label htmlFor={ids.title} className={labelBase}>
-                Title
+                Title <span className="font-normal text-ink-muted">(required)</span>
               </label>
               <input
                 ref={titleRef}
@@ -219,7 +231,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                 className={`${inputBase} mt-1 h-10`}
               />
               {titleError && (
-                <p id={ids.titleError} className="mt-1 text-[13px] font-semibold leading-[18px] text-due-overdue-fg">
+                <p id={ids.titleError} className="mt-1 text-caption font-semibold text-due-overdue-fg">
                   {titleError}
                 </p>
               )}
@@ -265,7 +277,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
               }))}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {/* Stage */}
               <div>
                 <label htmlFor={ids.status} className={labelBase}>
@@ -285,18 +297,35 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                 <label htmlFor={ids.assignee} className={labelBase}>
                   Assignee
                 </label>
-                <select id={ids.assignee} value={form.assignee} onChange={set('assignee')} className={`${inputBase} mt-1 h-10`}>
-                  {!isKnownAssignee(form.assignee) && (
-                    <option value={form.assignee}>
-                      Unassigned
-                    </option>
-                  )}
-                  {TEAM.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
+                <select
+                  id={ids.assignee}
+                  value={owner ? form.assignee : ''}
+                  onChange={set('assignee')}
+                  aria-describedby={owner && ownerRole ? ids.assigneeInfo : undefined}
+                  className={`${inputBase} mt-1 h-10`}
+                >
+                  <option value="">Unassigned</option>
+                  {team.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
                     </option>
                   ))}
                 </select>
+                {/* The owner's role and a contact link (Q&A: name + email). */}
+                {owner && (ownerRole || owner.email) && (
+                  <p className={`mt-1 flex flex-wrap items-center gap-x-2 ${helperText}`}>
+                    {ownerRole && <span id={ids.assigneeInfo}>{ownerRole}</span>}
+                    {owner.email && (
+                      <a
+                        href={`mailto:${owner.email}`}
+                        className={`inline-flex items-center gap-1 rounded font-semibold text-brand-primary underline underline-offset-2 hover:decoration-2 ${focusRing}`}
+                      >
+                        <Mail aria-hidden="true" className="h-3.5 w-3.5" />
+                        Contact {firstName(owner.name)}
+                      </a>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -312,7 +341,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                   value={form.dueDate}
                   onChange={set('dueDate')}
                   aria-describedby={dueInPast ? ids.dueHint : undefined}
-                  className={`${inputBase} h-10 max-w-[220px]`}
+                  className={`${inputBase} h-10 max-w-[13.75rem]`}
                 />
                 {form.dueDate && (
                   <button type="button" onClick={() => setForm((f) => ({ ...f, dueDate: '' }))} className={buttonSecondary}>
@@ -321,7 +350,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                 )}
               </div>
               {dueInPast && (
-                <p id={ids.dueHint} className="mt-1 flex items-center gap-1 text-[13px] leading-[18px] text-due-warning-fg">
+                <p id={ids.dueHint} className="mt-1 flex items-center gap-1 text-caption text-due-warning-fg">
                   <Clock aria-hidden="true" className="h-3.5 w-3.5" />
                   This date is in the past. You can save it.
                 </p>
@@ -359,17 +388,17 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                   spellCheck={false}
                   placeholder={'Goal, what already works, limits, files, the last prompt, the next step.'}
                   aria-describedby={[ids.contextHelp, form.context.length > CONTEXT_WARN_LENGTH && ids.contextWarn].filter(Boolean).join(' ')}
-                  className={`${inputBase} mt-2 min-h-[9rem] resize-y whitespace-pre-wrap py-2 font-mono text-sm leading-[22px]`}
+                  className={`${inputBase} mt-2 min-h-[9rem] resize-y whitespace-pre-wrap py-2 font-mono text-sm leading-[1.375rem]`}
                 />
                 {form.context.length > CONTEXT_WARN_LENGTH && (
-                  <p id={ids.contextWarn} className="mt-1 flex items-center gap-1 text-[13px] leading-[18px] text-due-warning-fg">
+                  <p id={ids.contextWarn} className="mt-1 flex items-center gap-1 text-caption text-due-warning-fg">
                     <TriangleAlert aria-hidden="true" className="h-3.5 w-3.5" />
                     This context is very long. The browser can keep approximately 5 MB of data.
                   </p>
                 )}
               </div>
 
-              <div className="flex items-end justify-between gap-4">
+              <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <label htmlFor={ids.tool} className={labelBase}>
                     Tool
@@ -401,19 +430,19 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
               )}
 
               {/* FR-M10-09: preview of the copied text */}
-              <details className="group overflow-hidden rounded-2xl border border-line-subtle bg-white/60">
+              <details className="group overflow-hidden rounded-2xl border border-line-subtle bg-glass/60">
                 <summary className="flex h-9 cursor-pointer items-center px-3 text-sm font-semibold text-ink hover:bg-brand-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
                   Preview the prompt
                 </summary>
-                <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words border-t border-line-subtle bg-surface-page px-3 py-2 font-mono text-[13px] leading-5 text-ink">
-                  {taskToPrompt(draftTask(), { today })}
+                <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words border-t border-line-subtle bg-surface-page px-3 py-2 font-mono text-caption leading-5 text-ink">
+                  {taskToPrompt(draftTask(), { today, ...promptOptions })}
                 </pre>
               </details>
             </div>
           </div>
 
           {/* Action bar — stays visible (FR-M5-12, DESIGN.md §4.8) */}
-          <div className="flex items-center justify-between gap-2 border-t border-line-subtle px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-subtle px-4 py-4 sm:px-6">
             <div>
               {isEdit && (
                 <button type="button" onClick={() => setConfirm('delete')} className={buttonDestructive}>
@@ -451,7 +480,7 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
       {confirm === 'delete' && (
         <ConfirmDialog
           title="Delete this task?"
-          body="You cannot undo this."
+          body="You can undo this for 5 seconds."
           confirmLabel="Delete task"
           onConfirm={() => {
             setConfirm(null);

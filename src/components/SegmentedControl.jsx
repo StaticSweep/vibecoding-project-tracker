@@ -22,7 +22,7 @@ export default function SegmentedControl({ legend, hideLegend = false, options, 
         white thumb) so the selected state keeps ≥ 3:1 contrast (NFR-A11Y-01).
       */}
       <div
-        className={`${hideLegend ? '' : 'mt-1 '}inline-flex gap-0.5 rounded-full border border-line-strong bg-white/75 p-0.5 backdrop-blur-xl reduce-transparency:bg-surface-card`}
+        className={`${hideLegend ? '' : 'mt-1 '}inline-flex max-w-full flex-wrap gap-0.5 rounded-[1.25rem] border border-line-strong bg-glass/75 p-0.5 backdrop-blur-xl reduce-transparency:bg-surface-card`}
       >
         {options.map((option) => {
           const Icon = option.icon;
@@ -39,7 +39,7 @@ export default function SegmentedControl({ legend, hideLegend = false, options, 
               />
               <span
                 className={`inline-flex ${height} cursor-pointer items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none peer-focus-visible:ring-2 peer-focus-visible:ring-brand-primary peer-focus-visible:ring-offset-2 ${
-                  checked ? `${option.selectedClass} shadow-glass-sm` : 'text-ink hover:bg-white'
+                  checked ? `${option.selectedClass} shadow-glass-sm` : 'text-ink hover:bg-glass'
                 }`}
               >
                 {Icon && (

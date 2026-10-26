@@ -10,13 +10,13 @@ export const TYPE_STYLES = {
     stripe: 'bg-type-feature',
     badge: 'bg-type-feature-bg text-type-feature-fg',
     iconClass: 'text-type-feature',
-    selected: 'bg-type-feature text-white',
+    selected: 'bg-type-feature text-on-strong',
   },
   bug: {
     icon: Bug,
     stripe: 'bg-type-bug',
     badge: 'bg-type-bug-bg text-type-bug-fg',
     iconClass: 'text-type-bug',
-    selected: 'bg-type-bug text-white',
+    selected: 'bg-type-bug text-on-strong',
   },
 };

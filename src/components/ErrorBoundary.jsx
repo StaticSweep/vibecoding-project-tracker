@@ -1,8 +1,12 @@
 import { Component } from 'react';
-import { buttonPrimary } from '../lib/ui.js';
+import { buildExport, downloadJson, exportFileName, readBoardFromStorage } from '../lib/transfer.js';
+import { todayISO } from '../lib/dates.js';
+import { buttonPrimary, buttonSecondary } from '../lib/ui.js';
 
 /**
  * Top-level error boundary (NFR-REL-02): never show a blank white screen.
+ * "Export my data" reads storage directly, so it works even when React state
+ * is the thing that broke.
  */
 export default class ErrorBoundary extends Component {
   state = { error: null };
@@ -15,6 +19,10 @@ export default class ErrorBoundary extends Component {
     console.error('Slopify crashed:', error, info.componentStack);
   }
 
+  exportData = () => {
+    downloadJson(exportFileName(todayISO()), buildExport(readBoardFromStorage()));
+  };
+
   render() {
     if (!this.state.error) return this.props.children;
 
@@ -25,9 +33,14 @@ export default class ErrorBoundary extends Component {
           <p className="mt-2 text-base leading-6 text-ink-muted">
             Reload the page. If the problem continues, export your data.
           </p>
-          <button type="button" onClick={() => window.location.reload()} className={`${buttonPrimary} mt-4`}>
-            Reload the page
-          </button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" onClick={() => window.location.reload()} className={buttonPrimary}>
+              Reload the page
+            </button>
+            <button type="button" onClick={this.exportData} className={buttonSecondary}>
+              Export my data
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -12,13 +12,15 @@ const COPY_FAILED =
 /**
  * "Copy as Prompt Context" (M10 copy-prompt, FR-M10-01/03/04/06).
  *
- *   getText  () => string — builds the prompt at click time
- *   variant  'icon' (card) | 'button' (modal)
+ *   getText      () => string — builds the prompt at click time
+ *   variant      'icon' (card) | 'button' (modal)
+ *   dataControl  optional `data-control` value, so a card shortcut can find it
+ *   shortcut     optional key shown in the tooltip, e.g. "C"
  *
  * One click copies. Success: "Copied" state for 2 s + toast. Failure: error
  * toast + a dialog with the text pre-selected for a manual copy.
  */
-export default function CopyPromptButton({ getText, variant = 'button' }) {
+export default function CopyPromptButton({ getText, variant = 'button', dataControl, shortcut }) {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
   const [manualText, setManualText] = useState(null);
@@ -47,7 +49,15 @@ export default function CopyPromptButton({ getText, variant = 'button' }) {
   return (
     <>
       {variant === 'icon' ? (
-        <button type="button" onClick={handleClick} aria-label={label} title={label} className={iconButton}>
+        <button
+          type="button"
+          data-control={dataControl}
+          onClick={handleClick}
+          aria-label={label}
+          aria-keyshortcuts={shortcut}
+          title={shortcut ? `${label} (${shortcut})` : label}
+          className={iconButton}
+        >
           <Icon aria-hidden="true" className={`h-4 w-4 ${copied ? 'text-due-safe' : ''}`} />
         </button>
       ) : (
@@ -75,7 +85,7 @@ function ManualCopyDialog({ text, onClose }) {
   }, []);
 
   return (
-    <Modal labelledBy={titleId} describedBy={helpId} onRequestClose={onClose} initialFocusRef={areaRef} className="max-w-[640px]">
+    <Modal labelledBy={titleId} describedBy={helpId} onRequestClose={onClose} initialFocusRef={areaRef} className="max-w-[40rem]">
       <div className="space-y-3 p-6">
         <h2 id={titleId} className="font-heading text-xl font-semibold leading-7">
           Copy the prompt
@@ -89,7 +99,7 @@ function ManualCopyDialog({ text, onClose }) {
           value={text}
           rows={12}
           onFocus={(e) => e.target.select()}
-          className="w-full resize-y rounded-xl border border-line-strong bg-surface-page px-3 py-2 font-mono text-sm leading-[22px] text-ink"
+          className="w-full resize-y rounded-xl border border-line-strong bg-surface-page px-3 py-2 font-mono text-sm leading-[1.375rem] text-ink"
         />
         <div className="flex justify-end">
           <button type="button" onClick={onClose} className={buttonPrimary}>

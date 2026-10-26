@@ -8,10 +8,10 @@ import { focusRing } from '../lib/ui.js';
  *   const toast = useToast();
  *   toast({ message: 'Copied. Paste it into your AI tool.' });
  *   toast({ message: '…', tone: 'error' });
- *   toast({ message: '…', action: { label: 'Undo', onClick } });
+ *   toast({ message: '…', action: { label: 'Undo', onClick }, duration: 5000 });
  *
  * - Bottom right, max 3 at once (the oldest leaves first).
- * - 200 ms fade, closes after 4 s, close button on each toast.
+ * - 200 ms fade, closes after 4 s (or `duration`), close button on each toast.
  * - Announced through an aria-live="polite" region.
  */
 
@@ -36,9 +36,9 @@ export function ToastProvider({ children }) {
     }, FADE_MS);
   }, []);
 
-  const show = useCallback(({ message, tone = 'info', action = null }) => {
+  const show = useCallback(({ message, tone = 'info', action = null, duration = DURATION_MS }) => {
     const id = nextId.current++;
-    setToasts((list) => [...list, { id, message, tone, action, leaving: false }].slice(-MAX_TOASTS));
+    setToasts((list) => [...list, { id, message, tone, action, duration, leaving: false }].slice(-MAX_TOASTS));
     return id;
   }, []);
 
@@ -69,15 +69,15 @@ function ToastItem({ toast, onDismiss }) {
 
   // Auto-close.
   useEffect(() => {
-    const timer = window.setTimeout(() => onDismiss(toast.id), DURATION_MS);
+    const timer = window.setTimeout(() => onDismiss(toast.id), toast.duration);
     return () => window.clearTimeout(timer);
-  }, [toast.id, onDismiss]);
+  }, [toast.id, toast.duration, onDismiss]);
 
   const shown = visible && !toast.leaving;
 
   return (
     <div
-      className={`pointer-events-auto flex items-start gap-3 rounded-2xl bg-ink/85 px-4 py-3 text-sm text-white shadow-glass-lg backdrop-blur-xl reduce-transparency:bg-ink transition-opacity duration-200 motion-reduce:transition-none ${
+      className={`pointer-events-auto flex items-start gap-3 rounded-2xl bg-inverse/85 px-4 py-3 text-sm text-on-inverse shadow-glass-lg backdrop-blur-xl reduce-transparency:bg-inverse transition-opacity duration-200 motion-reduce:transition-none ${
         shown ? 'opacity-100' : 'opacity-0'
       }`}
     >
@@ -93,7 +93,7 @@ function ToastItem({ toast, onDismiss }) {
             toast.action.onClick();
             onDismiss(toast.id);
           }}
-          className={`rounded font-semibold text-brand-accent underline underline-offset-2 hover:text-white ${focusRing}`}
+          className={`rounded font-semibold text-brand-accent underline underline-offset-2 hover:text-on-inverse ${focusRing}`}
         >
           {toast.action.label}
         </button>
@@ -102,7 +102,7 @@ function ToastItem({ toast, onDismiss }) {
         type="button"
         onClick={() => onDismiss(toast.id)}
         aria-label="Close notification"
-        className={`-m-1 rounded p-1 text-white/80 hover:text-white ${focusRing}`}
+        className={`-m-1 rounded p-1 text-on-inverse/80 hover:text-on-inverse ${focusRing}`}
       >
         <X aria-hidden="true" className="h-4 w-4" />
       </button>

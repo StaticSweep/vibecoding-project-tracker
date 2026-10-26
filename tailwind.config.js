@@ -1,47 +1,74 @@
 /** @type {import('tailwindcss').Config} */
+
+// Colour tokens are CSS variables (RGB triplets) defined in src/index.css,
+// once for the light theme and once for the dark theme (DESIGN.md §2). The
+// accent preset overrides the `brand-*` variables at run time (src/lib/color.js).
+// Class names do not change between themes: `bg-brand-primary` works in both.
+const token = (name) => `rgb(var(--c-${name}) / <alpha-value>)`;
+const semantic = (name) => ({ DEFAULT: token(name), bg: token(`${name}-bg`), fg: token(`${name}-fg`) });
+
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
-      // Design tokens from DESIGN.md §2. Contrast ratios are listed there.
       // Each semantic colour has three shades:
       //   DEFAULT = strong (stripes, borders, icons)
       //   bg      = tint (card and badge backgrounds)
       //   fg      = text on the tint
       colors: {
         brand: {
-          primary: '#155E63',
-          'primary-hover': '#0E4A4E',
-          accent: '#E3F1F1',
+          primary: token('brand-primary'),
+          'primary-hover': token('brand-primary-hover'),
+          accent: token('brand-accent'),
         },
         surface: {
-          page: '#F6F7F9',
-          card: '#FFFFFF',
+          page: token('surface-page'),
+          card: token('surface-card'),
         },
         // DESIGN.md `text-primary` / `text-muted` → `text-ink` / `text-ink-muted`
         ink: {
-          DEFAULT: '#1E2430',
-          muted: '#5B6472',
+          DEFAULT: token('ink'),
+          muted: token('ink-muted'),
         },
         line: {
-          subtle: '#D5D9E0', // decoration only
-          strong: '#8A93A3', // inputs, controls, avatar ring
+          subtle: token('line-subtle'), // decoration only
+          strong: token('line-strong'), // inputs, controls, avatar ring
         },
-        danger: '#B91C1C', // confirm-delete button only
+        danger: token('danger'), // confirm-delete button only
+
+        // Glass surfaces (DESIGN.md §2.6): the fill and the 1 px edge.
+        glass: { DEFAULT: token('glass'), edge: token('glass-edge') },
+        field: token('field'), // inputs are always solid
+        // Text on solid fills: brand buttons, type pills, the danger button.
+        'on-brand': token('on-brand'),
+        'on-strong': token('on-strong'),
+        // Toasts are the inverse of the page (dark in light mode, light in dark mode).
+        inverse: token('inverse'),
+        'on-inverse': token('on-inverse'),
+        scrim: token('scrim'), // modal backdrop
+        blob: { 1: token('blob-1'), 2: token('blob-2'), 3: token('blob-3') },
 
         // M6 tag-style
         type: {
-          feature: { DEFAULT: '#4338CA', bg: '#EEF0FF', fg: '#3730A3' },
-          bug: { DEFAULT: '#A21CAF', bg: '#FBEFFC', fg: '#86198F' },
+          feature: semantic('type-feature'),
+          bug: semantic('type-bug'),
         },
 
         // M8 due-tint
         due: {
-          safe: { DEFAULT: '#15803D', bg: '#EDF7F0', fg: '#166534' },
-          warning: { DEFAULT: '#B45309', bg: '#FFF6E5', fg: '#92400E' },
-          overdue: { DEFAULT: '#B91C1C', bg: '#FDEDED', fg: '#991B1B' },
-          neutral: { DEFAULT: '#64748B', bg: '#F1F3F6', fg: '#475569' },
+          safe: semantic('due-safe'),
+          warning: semantic('due-warning'),
+          overdue: semantic('due-overdue'),
+          neutral: semantic('due-neutral'),
         },
+      },
+
+      // DESIGN.md §3. Sizes are in rem, so the text-size setting scales them.
+      fontSize: {
+        caption: ['0.8125rem', '1.125rem'], // 13 / 18 px
+        'card-title': ['0.9375rem', '1.375rem'], // 15 / 22 px
+        wordmark: ['1.75rem', '2rem'], // 28 / 32 px
       },
 
       // DESIGN.md §3. Fonts are loaded from Google Fonts in index.html.
@@ -63,20 +90,23 @@ export default {
         ],
       },
 
-      // iOS-style glass (DESIGN.md §2.6). Shadows are soft and wide; blur
-      // comes from Tailwind's backdrop-blur utilities.
+      // iOS-style glass (DESIGN.md §2.6). The shadow values differ per theme,
+      // so they are CSS variables too.
       boxShadow: {
-        glass: '0 8px 32px -8px rgba(30, 36, 48, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
-        'glass-sm': '0 2px 10px -2px rgba(30, 36, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7)',
-        'glass-lg': '0 24px 64px -12px rgba(30, 36, 48, 0.32)',
+        glass: 'var(--shadow-glass)',
+        'glass-sm': 'var(--shadow-glass-sm)',
+        'glass-lg': 'var(--shadow-glass-lg)',
       },
     },
   },
   plugins: [
     // `reduce-transparency:` — solid surfaces for users who ask for less
-    // transparency in their OS settings (accessibility).
+    // transparency, in the OS or in Slopify's settings (accessibility).
     ({ addVariant }) => {
-      addVariant('reduce-transparency', '@media (prefers-reduced-transparency: reduce)');
+      addVariant('reduce-transparency', [
+        '@media (prefers-reduced-transparency: reduce)',
+        ':root[data-transparency="reduce"] &',
+      ]);
     },
   ],
 };

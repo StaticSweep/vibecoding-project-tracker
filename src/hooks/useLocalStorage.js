@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 const resolve = (v) => (typeof v === 'function' ? v() : v);
+const noop = () => {};
 
 /**
  * localStorage-backed state — survives reloads, no library needed.
@@ -10,6 +11,7 @@ const resolve = (v) => (typeof v === 'function' ? v() : v);
  *     normalise: (raw) => ({ ok, value, dropped }),
  *     fallback: [],
  *     onWriteError: (err) => toast(...),
+ *     readOnly: false,
  *   });
  *
  * - `initialValue` (value or function) is used only when the key is absent
@@ -20,25 +22,51 @@ const resolve = (v) => (typeof v === 'function' ? v() : v);
  * - `notice` describes any repair made on load, so the UI can tell the user.
  * - `onWriteError` is called when a write fails, e.g. quota exceeded
  *   (NFR-REL-04, DR-CAP-03). The in-memory state is kept either way.
+ * - `readOnly` (DR-MIG-04): nothing is written and the setter does nothing.
+ * - A change made in another tab of the same browser is picked up through
+ *   the `storage` event, so two open tabs stay in sync (FR-DATA-06).
  */
 export function useLocalStorage(key, initialValue, options = {}) {
-  const { normalise, fallback, onWriteError } = options;
+  const { normalise, fallback, onWriteError, readOnly = false } = options;
 
   const [initial] = useState(() => readInitial(key, initialValue, normalise, fallback));
   const [value, setValue] = useState(initial.value);
 
-  const onWriteErrorRef = useRef(onWriteError);
-  onWriteErrorRef.current = onWriteError;
+  const latest = useRef({ normalise, fallback, initialValue, onWriteError });
+  latest.current = { normalise, fallback, initialValue, onWriteError };
 
   useEffect(() => {
+    if (readOnly) return;
     try {
       window.localStorage.setItem(key, JSON.stringify(value));
     } catch (err) {
-      onWriteErrorRef.current?.(err);
+      latest.current.onWriteError?.(err);
     }
-  }, [key, value]);
+  }, [key, value, readOnly]);
 
-  return [value, setValue, initial.notice];
+  // FR-DATA-06: follow writes from other tabs. Writing the same string back
+  // does not fire another event, so the tabs cannot loop.
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.storageArea !== window.localStorage || e.key !== key) return;
+      const { normalise: norm, fallback: fb, initialValue: init } = latest.current;
+      if (e.newValue == null) {
+        setValue(resolve(fb !== undefined ? fb : init));
+        return;
+      }
+      try {
+        const parsed = JSON.parse(e.newValue);
+        const result = norm ? norm(parsed) : { ok: true, value: parsed };
+        if (result.ok) setValue(result.value);
+      } catch {
+        /* unreadable — keep what this tab has */
+      }
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [key]);
+
+  return [value, readOnly ? noop : setValue, initial.notice];
 }
 
 function readInitial(key, initialValue, normalise, fallback) {

@@ -11,5 +11,5 @@ export const DUE_STYLES = {
   overdue: { card: 'bg-due-overdue-bg/90', label: 'text-due-overdue-fg', icon: TriangleAlert },
   warning: { card: 'bg-due-warning-bg/90', label: 'text-due-warning-fg', icon: Clock },
   safe:    { card: 'bg-due-safe-bg/90', label: 'text-due-safe-fg',    icon: Calendar },
-  none:    { card: 'bg-white/85',      label: 'text-ink-muted',      icon: null },
+  none:    { card: 'bg-glass/85',      label: 'text-ink-muted',      icon: null },
 };

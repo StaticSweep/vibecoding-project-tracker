@@ -1,6 +1,6 @@
 # Slopify — Design
 
-**Status:** Complete for `design-done` (M3). The tokens in §2 go into `tailwind.config.js`. The fonts in §3 go into `index.html`.
+**Status:** Complete for `design-done` (M3). Updated after the client Q&A (PRD §15): dark theme, accent colour, text size, reflow, team and settings components. The colour tokens in §2 are CSS variables in `src/index.css`. `tailwind.config.js` refers to them. The fonts in §3 go into `index.html`.
 
 **Who owns this.** One developer builds Slopify. Slopify is a tool for **teams**. All design decisions in this document are for a team of users.
 
@@ -52,6 +52,7 @@ This document uses **ASD-STE100 Simplified Technical English (STE)**. Use the sa
 **Rules for colour:**
 
 - Use only the tokens in this section. Do not write hex values in JSX (NFR-UI-01).
+- The tokens are CSS variables (RGB values) in `src/index.css`. There is one set for the light theme and one set for the dark theme (§2.7). The class names are the same in the two themes.
 - Do not use default Tailwind blue as a brand colour.
 - Each hue has one meaning:
 
@@ -177,7 +178,53 @@ Each glass level has a 1 px white border at 70–80 % opacity, a soft wide shado
 - The modal backdrop is `text-primary` at 30 % with a small blur.
 - Toasts are dark glass: `text-primary` at 85 % with a blur.
 - **Contrast.** The worst case is `text-muted` on panel glass over lavender: 4.93:1. Do not make the backdrop stronger or the glass thinner without a new check (§2.5).
-- **Reduce transparency.** When the user sets "reduce transparency" in the operating system, all glass becomes solid `surface-card` and the blur stops (`reduce-transparency:` variant in `tailwind.config.js`).
+- **Reduce transparency.** When the user sets "reduce transparency" in the operating system or in Settings, all glass becomes solid `surface-card` and the blur stops (`reduce-transparency:` variant in `tailwind.config.js`).
+- **Glass tokens.** Glass uses `bg-glass/…` and `border-glass-edge/…`, not `white`. In the dark theme, glass is dark (§2.7).
+
+### 2.7 Dark theme
+
+The user selects Light, Dark or "Match system" in Settings → Accessibility & appearance. The dark theme keeps the glass style. Each meaning keeps its hue.
+
+| Token | Dark hex | Contrast |
+|---|---|---|
+| `surface-page` | `#0E131A` | — |
+| `surface-card` | `#19202A` | — |
+| `field` (inputs) | `#111720` | — |
+| `text-primary` (`ink`) | `#E8ECF2` | 13.82:1 on card |
+| `text-muted` (`ink-muted`) | `#A9B2C0` | 7.66:1 on card · min. 6.83:1 on panel glass |
+| `line-strong` | `#6E7A8C` | 3.77:1 on card · min. 3.36:1 on panel glass |
+| `brand-primary` | `#5BC2BA` | 7.70:1 on card · `on-brand` text on it 8.58:1 |
+| `on-brand` / `on-strong` | `#0B1718` | Text on brand, type pills and the danger button |
+| `type-feature` | `#959CFA` · bg `#252A52` · fg `#CBCEFF` | Stripe 6.57:1 · badge text 9.02:1 |
+| `type-bug` | `#E486EE` · bg `#3A1E40` · fg `#F4C6F9` | Stripe 6.98:1 · badge text 9.93:1 |
+| `due-safe` | `#4FD68A` · bg `#13301F` · fg `#A3E9BD` | Label 11.67:1 · body text on tint 12.45:1 |
+| `due-warning` | `#F2AA52` · bg `#352611` · fg `#FBD69A` | Label 11.85:1 · 12.73:1 |
+| `due-overdue` | `#F27474` · bg `#3C1A1B` · fg `#FCAEAE` | Label 9.21:1 · 13.45:1 |
+| `due-neutral` | `#97A4B7` · bg `#232A35` · fg `#CDD5E0` | Label 11.07:1 · 12.52:1 |
+| `danger` | `#F27474` | `on-strong` text on it 6.54:1 |
+
+**Rules:**
+
+- Toasts use the inverse colours: dark in the light theme, light in the dark theme (`inverse`, `on-inverse`).
+- The backdrop colour fields are dark teal, indigo and plum (`blob-1…3`).
+- Do the checks in §2.5 for the two themes.
+
+### 2.8 Accent colour
+
+The user can change the accent in Settings → Accessibility & appearance. The accent changes only the three `brand-*` tokens. The type colours and the due colours do not change.
+
+| Preset | Light | Dark | Contrast (light · dark) |
+|---|---|---|---|
+| Teal (default) | `#155E63` | `#5BC2BA` | White text 7.46:1 · dark text 8.58:1 |
+| Ocean | `#1F5C99` | `#6FAEE8` | 6.89:1 · 7.74:1 |
+| Graphite | `#3F4856` | `#AAB4C3` | 9.24:1 · 8.72:1 |
+| Cocoa | `#7A4A2A` | `#D7A27C` | 7.39:1 · 8.13:1 |
+
+**Rules:**
+
+- The presets do not use indigo, magenta, green, amber or red. These hues have other meanings (§2).
+- A custom colour must give 4.5:1 for button text and 5.5:1 as link text on a card. If it does not, Slopify makes it darker (light theme) or lighter (dark theme) until it passes. Then the panel shows "Adjusted for readability."
+- The hover shade and the tint are calculated from the accent (`src/lib/color.js`).
 
 ---
 
@@ -212,6 +259,8 @@ All fonts come from Google Fonts. These fonts help readers with low vision and r
 | Badge | Atkinson Hyperlegible Mono | 12 / 16 px | 600 | Uppercase, letter spacing 0.04 em |
 | Context field | Atkinson Hyperlegible Mono | 14 / 22 px | 400 | Keep all spaces and line breaks |
 
+**Text size.** All sizes are in rem (`text-caption`, `text-card-title`, `text-wordmark` tokens). The text size setting changes the root size: Default 100 %, Large 115 %, Larger 130 %.
+
 **Rules:**
 
 - Do not use text smaller than 12 px. Use 12 px for badges and avatar initials only.
@@ -225,12 +274,14 @@ All fonts come from Google Fonts. These fonts help readers with low vision and r
 
 ### 4.1 Layout
 
-- The minimum viewport is 1280 × 720 px. At 1024 px, the board scrolls horizontally (NFR-UI-06). Mobile is out of scope.
+- The layout reflows for zoom and small screens (WCAG 1.4.10). Below 768 px, the page scrolls and the board shows one stage. Stage buttons above the board select the stage. From 768 px to 1279 px, the columns scroll horizontally with snap. From 1280 px, the four columns show.
+- After a move on a small screen, the board shows the new stage of the card.
 - The page has 16 px of padding. The header bar, the Anchor Board and the columns are separate glass panels with 12–16 px gaps.
 - The order from top to bottom is: header, Anchor Board, board, footer.
 - The Anchor Board has a maximum height of 120 px. The board stays above the fold (FR-M11-08).
-- The board has four columns of equal width, with a 16 px gap. Each column has a minimum width of 260 px.
-- Each column scrolls vertically. The header and the Anchor Board do not scroll with the columns (FR-M4-12).
+- From 1280 px, the board has four columns of equal width, with a 16 px gap. Below 1280 px, each column is 18 rem wide.
+- From 768 px, each column scrolls vertically. The header and the Anchor Board do not scroll with the columns (FR-M4-12).
+- The Anchor Board shows 4 slots in a row from 1280 px, 2 from 640 px and 1 below 640 px.
 
 ### 4.2 Spacing, corners, borders and shadows
 
@@ -341,9 +392,11 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 ### 4.14 Header and footer
 
-- The header shows the wordmark, the tagline, the filters and the "Add task" button.
+- The header has two rows. Row 1: the wordmark, the project and team name, the search field, "Add task", the team lead, "Settings" and "Help". Row 2: the filters ("My tasks", owner, type, overdue count, "Clear filters").
+- Below 768 px, row 2 folds behind a "Filters" button with `aria-expanded`.
 - The "Add task" button is always visible (FR-APP-04).
-- The footer shows the privacy note (§5) and the "Export", "Load demo data" and "Reset board" buttons.
+- The footer shows the privacy note (§5) and the "Export", "Import", "Load demo data" and "Reset board" buttons.
+- A skip link ("Skip to the board") is the first Tab stop.
 
 ### 4.15 Icons
 
@@ -364,7 +417,36 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 - Toasts fade in 200 ms. Card hover shadows change in 150 ms.
 - There is no other animation.
-- When the user sets `prefers-reduced-motion`, remove all animation (NFR-A11Y-09).
+- When the user sets `prefers-reduced-motion`, or "Reduce motion" in Settings, remove all animation (NFR-A11Y-09).
+
+### 4.18 Settings dialog
+
+- One dialog with three tabs: "Project & team", "Accessibility & appearance" and "Data". The tabs follow the WAI-ARIA tabs pattern: ← and → move between tabs.
+- Each change saves immediately. There is no "Save" button.
+- Each section has an h3 heading and one line of helper text.
+
+### 4.19 Keyboard shortcuts
+
+- Global: N (new task), / (search), ? (help). The shortcuts do not work when the user types or when a dialog is open.
+- On a card (focus on its title): [ and ] move the card, E edits, C copies the prompt, H focuses "Hand off to…".
+- Each shortcut has `aria-keyshortcuts` and shows in the tooltip and in the Help dialog.
+- Do not use Alt + ← or Alt + →. The browser uses them for Back and Forward.
+
+### 4.20 Help dialog
+
+- The Help dialog explains the card, lists every shortcut and tells where the data lives. It is for new and junior team members.
+
+### 4.21 Team list and team lead
+
+- Each member row shows the avatar, the name, the role, the number of tasks and the email as a link. The email link is underlined.
+- One member has the "Team lead" badge (Lucide `crown`). There is no sign-in: Slopify always acts as the team lead.
+- "Remove" is not available for the team lead. The tooltip tells why.
+- Before a removal, a dialog asks who gets the member's tasks. The default is the team lead.
+
+### 4.22 Welcome card
+
+- On the first visit, a welcome card shows above the Anchor Board. It never blocks the board.
+- It has one secondary button ("Set up the team") and a close button.
 
 ---
 
@@ -433,6 +515,22 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 | Version buttons | Show · Hide · Restore | M12 |
 | Restore tooltip | Put this version in the Context field. Save to keep it. | M12 |
 | Card version count | {tool} · v{n} | M12 |
+| Confirm-delete message (with Undo) | Delete this task? You can undo this for 5 seconds. | FR-M5-14 |
+| Delete toast | Task deleted. · Undo | FR-M5-14 |
+| Import confirm | Replace {n} tasks with {m} tasks and {k} team members from “{file}”? You cannot undo this. | DR-IMP-03 |
+| Import error | Slopify cannot read this file. Choose a file that Slopify exported. | DR-IMP-01 |
+| Import from newer version | A newer version of Slopify made this file. Update Slopify, then try again. | DR-IMP-01 |
+| Reset confirm body | Your team and settings stay. You cannot undo this. | FR-M13-05 |
+| Storage warning | Your board is almost too big for this browser. Export it, then remove old contexts. | DR-CAP-02 |
+| Welcome card | Welcome to Slopify. Track the task. Keep the context. · You are the team lead, {name}. Add your own name, your team and their roles. | PRD §15 |
+| Team lead (header) | {name} · Team lead | PRD §15 |
+| Member name error | Type a name. · A team member has this name. Use a different name. | PRD §15 |
+| Member email error | Type an email address, for example sam@example.com. | PRD §15 |
+| Email helper | For contact only. Slopify never sends email. | PRD §15 |
+| Remove member | Remove {name} from the team? · {name} has {n} tasks. Choose who gets them. | PRD §15 |
+| Lead cannot leave | Make another member the team lead first. | PRD §15 |
+| Accent adjusted | Adjusted for readability. | §2.8 |
+| Filter result (screen reader) | Showing {n} of {m} tasks. | NFR-A11Y |
 
 ---
 
@@ -449,8 +547,8 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 These items are not part of `design-done`:
 
-- A dark mode toggle. Slopify has one light mode.
-- Multiple themes. One brand applies to all screens.
+- ~~A dark mode toggle~~ — added after the client Q&A (§2.7).
+- ~~Multiple themes~~ — one brand, with a light and a dark theme and a choice of accent (§2.8).
 - Animation other than the items in §4.17.
 - Drag-and-drop (§4.5).
 - A custom icon set. Use Lucide icons only.
@@ -467,9 +565,9 @@ Do these checks before you push each tag from M4 to M13. The target is WCAG 2.2 
 3. Make sure that the focus ring shows on each item.
 4. Open the modal. Make sure that the modal keeps the focus.
 5. Push Esc. Make sure that the focus goes back to the item that opened the modal.
-6. Set the browser zoom to 200 %. Make sure that you can use all functions.
+6. Set the browser zoom to 200 %, then set the window width to 320 px. Make sure that you can use all functions without horizontal scroll. Set the text size to 130 % in Settings.
 7. Set `prefers-reduced-motion`. Make sure that no animation occurs.
-8. Do a scan with Lighthouse or axe DevTools. The Lighthouse accessibility score must be a minimum of 90. There must be no critical issues.
+8. Do a scan with Lighthouse or axe DevTools in the light theme and in the dark theme. The Lighthouse accessibility score must be a minimum of 90. There must be no critical issues.
 
 ---
 
@@ -487,4 +585,4 @@ Do these checks before you push each tag from M4 to M13. The target is WCAG 2.2 
 
 ---
 
-*DESIGN.md version: Slopify v1 · based on hackathon-starter v1*
+*DESIGN.md version: Slopify v2 (client Q&A refinement) · based on hackathon-starter v1*

@@ -16,7 +16,7 @@ export default function AnchorBoard({ anchors, onChange }) {
 
   return (
     <section aria-labelledby={headingId} className={`mx-4 mb-3 rounded-3xl px-4 pb-3 pt-2.5 ${glassPanel}`}>
-      <div className="mb-2 flex items-baseline gap-2">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-2">
         <h2
           id={headingId}
           className="font-heading text-sm font-semibold uppercase leading-5 tracking-[0.05em] text-ink"
@@ -24,11 +24,11 @@ export default function AnchorBoard({ anchors, onChange }) {
           Deliverables
         </h2>
         {/* FR-M11-07 */}
-        <p className="text-[13px] leading-[18px] text-ink-muted">
+        <p className="text-caption text-ink-muted">
           {linked} of {anchors.length} links added
         </p>
       </div>
-      <ul className="grid min-w-[1088px] grid-cols-4 gap-4">
+      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         {anchors.map((anchor) => (
           <AnchorSlot key={anchor.id} anchor={anchor} onChange={onChange} />
         ))}
@@ -93,7 +93,7 @@ function AnchorSlot({ anchor, onChange }) {
     <li ref={slotRef}>
       {editing ? (
         <div>
-          <div className={`${box} border border-brand-primary bg-white/90 shadow-glass-sm`}>
+          <div className={`${box} border border-brand-primary bg-glass/90 shadow-glass-sm`}>
             <label htmlFor={inputId} className="sr-only">
               {anchor.label} link
             </label>
@@ -137,7 +137,7 @@ function AnchorSlot({ anchor, onChange }) {
             )}
           </div>
           {error && (
-            <p id={errorId} className="mt-1 text-[13px] font-semibold leading-[18px] text-due-overdue-fg">
+            <p id={errorId} className="mt-1 text-caption font-semibold text-due-overdue-fg">
               {error}
             </p>
           )}
@@ -175,7 +175,7 @@ function AnchorSlot({ anchor, onChange }) {
           data-slot-focus
           onClick={startEdit}
           aria-label={`Add link for ${anchor.label}`}
-          className={`${box} w-full border border-dashed border-line-strong bg-white/50 text-left text-ink-muted transition-colors duration-150 hover:bg-white/90 hover:text-brand-primary motion-reduce:transition-none reduce-transparency:bg-surface-card ${focusRing}`}
+          className={`${box} w-full border border-dashed border-line-strong bg-glass/50 text-left text-ink-muted transition-colors duration-150 hover:bg-glass/90 hover:text-brand-primary motion-reduce:transition-none reduce-transparency:bg-surface-card ${focusRing}`}
         >
           <Plus aria-hidden="true" className="h-4 w-4 shrink-0" />
           <span className="min-w-0">
