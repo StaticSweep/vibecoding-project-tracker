@@ -39,7 +39,10 @@ export default function Header({
   const subtitle = [workspace.projectName, workspace.teamName].filter((s) => s?.trim()).join(' · ');
 
   return (
-    <header className={`mx-4 mb-3 mt-4 rounded-3xl ${glassPanel}`}>
+    // `relative z-20`: the blurred glass panels below each start their own
+    // stacking layer, so the header must sit above them or the profile menu
+    // slides under the Anchor Board.
+    <header className={`relative z-20 mx-4 mb-3 mt-4 rounded-3xl ${glassPanel}`}>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-3">
         <div className="min-w-0">
           <h1 className="font-heading text-wordmark font-semibold tracking-tight text-brand-primary">Slopify</h1>
