@@ -2,7 +2,7 @@ import { LEGACY_TEAM, STORAGE_KEYS } from './constants.js';
 import { createMember } from './team.js';
 
 /**
- * Data schema versioning (PRD §14.4.7, DR-MIG-01…04).
+ * Data schema versioning (REQUIREMENTS.md §18, DR-MIG-01…04).
  *   v0 — tasks without the M9 context fields
  *   v1 — the full PRD §5 model
  *   v2 — adds the optional M12 `contextHistory` list

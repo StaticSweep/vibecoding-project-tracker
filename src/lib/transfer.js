@@ -5,7 +5,7 @@ import { normaliseTeam, normaliseWorkspace } from './team.js';
 import { SCHEMA_VERSION, migrateData } from './schema.js';
 
 /**
- * Export, import and storage size (PRD §14.4.9, FR-DATA-04/05, DR-EXP,
+ * Export, import and storage size (REQUIREMENTS.md §17 and §21.5, FR-DATA-04/05, DR-EXP,
  * DR-IMP, DR-CAP-02). localStorage is per browser, so a JSON file is the
  * way to move a board between teammates.
  *

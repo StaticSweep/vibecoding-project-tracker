@@ -2,7 +2,7 @@ import { STORAGE_KEYS } from './constants.js';
 import { DEFAULT_ACCENT, ACCENT_PRESETS, isHexColor, resolveAccent, toTriplet } from './color.js';
 
 /**
- * Per-browser preferences (`vibetracker.prefs`, DR-STO table). They are never
+ * Per-browser preferences (`vibetracker.prefs`, REQUIREMENTS.md §21.4). They are never
  * exported: each person picks their own theme and text size.
  *
  * Log-in has no password: `currentMemberId` is the profile chosen on the

@@ -49,7 +49,7 @@ export function daysBetween(fromIso, toIso) {
 }
 
 /**
- * Due state of a task (DESIGN.md §2.3, PRD §14.2 M8 table).
+ * Due state of a task (DESIGN.md §2.3, REQUIREMENTS.md §8 table).
  * @returns {'done'|'overdue'|'warning'|'safe'|'none'}
  */
 export function getDueState(task, today) {
