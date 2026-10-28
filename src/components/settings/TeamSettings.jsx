@@ -22,7 +22,7 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /**
  * Settings → Project & team (Q&A: one project, one team; add members; name,
- * email, role). Slopify always acts as the team lead — there is no sign-in.
+ * email, role). The logged-in profile is "you"; the team lead is a badge.
  * Every change saves at once (PRD §14.1 "Never lose work").
  */
 export default function TeamSettings() {
@@ -96,7 +96,7 @@ function ProjectSection() {
 
 function TeamSection() {
   const toast = useToast();
-  const { team, setTeam, tasks, setTasks, setWorkspace, lead } = useAppData();
+  const { team, setTeam, tasks, setTasks, setWorkspace, lead, currentUser } = useAppData();
   // null | 'new' | a member id
   const [editing, setEditing] = useState(null);
   const [removing, setRemoving] = useState(null);
@@ -131,7 +131,7 @@ function TeamSection() {
 
   function makeLead(member) {
     setWorkspace((w) => ({ ...w, leadId: member.id }));
-    toast({ message: `${member.name} is now the team lead. Slopify acts as the team lead.` });
+    toast({ message: `${member.name} is now the team lead.` });
   }
 
   function remove(member, heirId) {
@@ -160,8 +160,8 @@ function TeamSection() {
         </button>
       </div>
       <p className={`mt-1 max-w-prose ${helperText}`}>
-        {endSentence(`Slopify acts as the team lead, ${lead?.name}`)} New tasks go to the lead, and “My tasks” shows the
-        lead’s tasks.
+        {endSentence(`You are logged in as ${currentUser.name}`)} The team lead is {endSentence(lead?.name ?? 'not set')}{' '}
+        Everyone can log in as any profile from the log-in screen.
       </p>
 
       {editing === 'new' && (
@@ -181,6 +181,9 @@ function TeamSection() {
       <ul ref={listRef} className="mt-3 divide-y divide-line-subtle rounded-2xl border border-line-subtle bg-glass/70 reduce-transparency:bg-surface-card">
         {team.map((member) => {
           const isLead = member.id === lead?.id;
+          const isMe = member.id === currentUser.id;
+          // You cannot remove yourself or the team lead.
+          const removeBlock = isMe ? 'You cannot remove yourself. Log in as someone else first.' : isLead ? 'Make another member the team lead first.' : '';
           const count = taskCount(member.id);
           if (editing === member.id) {
             return (
@@ -203,6 +206,11 @@ function TeamSection() {
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 font-semibold text-ink">
                   <span className="break-words">{member.name}</span>
+                  {isMe && (
+                    <span className="inline-flex h-5 items-center rounded-full border border-line-strong px-2 font-mono text-xs font-semibold uppercase tracking-[0.04em] text-ink">
+                      You
+                    </span>
+                  )}
                   {isLead && (
                     <span className="inline-flex h-5 items-center gap-1 rounded-full bg-brand-accent px-2 font-mono text-xs font-semibold uppercase tracking-[0.04em] text-brand-primary">
                       <Crown aria-hidden="true" className="h-3 w-3" />
@@ -240,15 +248,13 @@ function TeamSection() {
                 >
                   <Pencil aria-hidden="true" className="h-4 w-4" />
                 </button>
-                {/* The lead cannot leave: Slopify always acts as the lead. */}
+                {/* You cannot remove yourself or the team lead. */}
                 <button
                   type="button"
                   onClick={() => setRemoving(member)}
-                  disabled={isLead}
-                  aria-label={
-                    isLead ? `${endSentence(`Remove ${member.name}`)} Make another member the team lead first.` : `Remove ${member.name}`
-                  }
-                  title={isLead ? 'Make another member the team lead first.' : 'Remove from the team'}
+                  disabled={Boolean(removeBlock)}
+                  aria-label={removeBlock ? `${endSentence(`Remove ${member.name}`)} ${removeBlock}` : `Remove ${member.name}`}
+                  title={removeBlock || 'Remove from the team'}
                   className={`${iconButton} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   <Trash2 aria-hidden="true" className="h-4 w-4" />

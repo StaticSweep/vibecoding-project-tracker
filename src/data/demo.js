@@ -9,6 +9,8 @@ import { createId } from '../lib/ids.js';
  * - Six members, one per role from the Q&A target audience. Dana is the
  *   team lead, so Slopify acts as Dana after the demo loads.
  * - Five tasks carry curated context; two have earlier prompt versions.
+ * - Every task has a creator and an activity history; Dana handed four
+ *   tasks to the team, so logging in as Jo or Priya shows the notice.
  * - Dates are relative to `today`, so the due tints are right on pitch day.
  * - Anchor links are clearly marked placeholders (example.com). Replace
  *   them with the real deliverables before the pitch (DR-SEED-05).
@@ -26,21 +28,37 @@ export function buildDemoBoard(today, now = Date.now()) {
   const luis = member('Luis F.', 'database');
   const mia = member('Mia T.', 'swe');
 
-  const task = (fields) => ({
-    id: createId(),
-    description: '',
-    dueDate: null,
-    context: '',
-    contextTool: null,
-    contextUpdatedAt: null,
-    contextHistory: [],
-    ...fields,
-  });
+  // `by` created the task (default: its owner). When the creator is not the
+  // owner, the history also shows the handoff, an hour later (schema v4).
+  const task = ({ by, ...fields }) => {
+    const creator = by ?? fields.assignee;
+    const createdAt = new Date(`${fields.createdDate}T09:00:00`).toISOString();
+    const activity = [{ at: createdAt, by: creator, type: 'created' }];
+    if (creator !== fields.assignee) {
+      const at = new Date(Date.parse(createdAt) + 3_600_000).toISOString();
+      activity.unshift({ at, by: creator, type: 'handoff', from: creator, to: fields.assignee });
+    }
+    return {
+      id: createId(),
+      description: '',
+      dueDate: null,
+      context: '',
+      contextTool: null,
+      contextUpdatedAt: null,
+      contextHistory: [],
+      ...fields,
+      createdBy: creator,
+      updatedBy: activity[0].by,
+      updatedAt: activity[0].at,
+      activity,
+    };
+  };
 
   const tasks = [
     // To Do
     task({
       title: 'Dark theme for the board and the task modal',
+      by: dana.id,
       description: 'Light, dark and "match system". Keep every text pair at 4.5:1 or more.',
       type: 'feature',
       status: 'todo',
@@ -63,6 +81,7 @@ export function buildDemoBoard(today, now = Date.now()) {
     }),
     task({
       title: 'Hand-off select cuts off long names on the card',
+      by: dana.id,
       type: 'bug',
       status: 'todo',
       assignee: jo.id,
@@ -83,6 +102,7 @@ export function buildDemoBoard(today, now = Date.now()) {
     }),
     task({
       title: 'Export the board as a JSON file',
+      by: dana.id,
       description: 'The only way to move a board between our laptops.',
       type: 'feature',
       status: 'todo',
@@ -189,6 +209,7 @@ export function buildDemoBoard(today, now = Date.now()) {
     }),
     task({
       title: 'Long card titles push the stage controls off the card',
+      by: dana.id,
       type: 'bug',
       status: 'review',
       assignee: jo.id,

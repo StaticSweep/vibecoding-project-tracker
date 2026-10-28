@@ -5,6 +5,7 @@ import ConfirmDialog from './ConfirmDialog.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
 import CopyPromptButton from './CopyPromptButton.jsx';
 import PromptHistory from './PromptHistory.jsx';
+import ActivityLog, { Attribution } from './ActivityLog.jsx';
 import { taskToPrompt } from '../lib/prompt.js';
 import { TYPE_STYLES } from '../lib/types.js';
 import { CONTEXT_TOOLS, DESCRIPTION_MAX, STAGES, TITLE_MAX, TYPES } from '../lib/constants.js';
@@ -208,6 +209,9 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
 
           {/* Body — scrolls when taller than the viewport (FR-M5-19) */}
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6">
+            {/* v4: who made and last changed the task */}
+            {isEdit && <Attribution task={task} />}
+
             {/* Title */}
             <div>
               <label htmlFor={ids.title} className={labelBase}>
@@ -434,10 +438,13 @@ export default function TaskModal({ mode, task, defaults, today, onSave, onDelet
                 <summary className="flex h-9 cursor-pointer items-center px-3 text-sm font-semibold text-ink hover:bg-brand-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
                   Preview the prompt
                 </summary>
-                <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words border-t border-line-subtle bg-surface-page px-3 py-2 font-mono text-caption leading-5 text-ink">
+                <pre tabIndex={0} aria-label="Prompt preview" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-primary max-h-64 overflow-auto whitespace-pre-wrap break-words border-t border-line-subtle bg-surface-page px-3 py-2 font-mono text-caption leading-5 text-ink">
                   {taskToPrompt(draftTask(), { today, ...promptOptions })}
                 </pre>
               </details>
+
+              {/* v4: who did what to this task */}
+              {isEdit && <ActivityLog task={task} />}
             </div>
           </div>
 

@@ -392,7 +392,7 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 ### 4.14 Header and footer
 
-- The header has two rows. Row 1: the wordmark, the project and team name, the search field, "Add task", the team lead, "Settings" and "Help". Row 2: the filters ("My tasks", owner, type, overdue count, "Clear filters").
+- The header has two rows. Row 1: the wordmark, the project and team name, the search field, "Add task", the logged-in profile (§4.24), "Settings" and "Help". Row 2: the filters ("My tasks", owner, type, overdue count, "Clear filters").
 - Below 768 px, row 2 folds behind a "Filters" button with `aria-expanded`.
 - The "Add task" button is always visible (FR-APP-04).
 - The footer shows the privacy note (§5) and the "Export", "Import", "Load demo data" and "Reset board" buttons.
@@ -439,14 +439,32 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 ### 4.21 Team list and team lead
 
 - Each member row shows the avatar, the name, the role, the number of tasks and the email as a link. The email link is underlined.
-- One member has the "Team lead" badge (Lucide `crown`). There is no sign-in: Slopify always acts as the team lead.
-- "Remove" is not available for the team lead. The tooltip tells why.
+- One member has the "Team lead" badge (Lucide `crown`). The logged-in profile has a "You" badge.
+- "Remove" is not available for the team lead or for yourself. The tooltip tells why.
 - Before a removal, a dialog asks who gets the member's tasks. The default is the team lead.
 
 ### 4.22 Welcome card
 
 - On the first visit, a welcome card shows above the Anchor Board. It never blocks the board.
 - It has one secondary button ("Set up the team") and a close button.
+
+### 4.23 Log-in screen
+
+- The log-in screen is one glass panel in the centre of the page. The heading is "Who are you?" and gets the focus.
+- Each profile is one large button: avatar, name, "Team lead" badge, role and the number of open tasks. One click logs in. There is no password.
+- The text under the heading tells the user that anyone who uses the browser can choose any profile.
+- "Add a new profile" opens the member form. Its button is "Add and log in".
+
+### 4.24 Profile menu
+
+- The header button shows the avatar, the name and "Team lead" or the role. It opens a small menu (`aria-expanded`).
+- The menu has "Edit my profile" and "Log out or switch profile". Esc, a click outside or Tab out closes it.
+
+### 4.25 Attribution and activity
+
+- In the edit modal, a caption under the header shows "Created by … · last change by …, {time} ago".
+- An "Activity" disclosure at the end of the form lists each change, newest first: an icon, a sentence and the time. A removed member shows as "A former team member".
+- At log-in, a toast tells the user how many tasks were handed to them. Its action is "Show my tasks".
 
 ---
 
@@ -531,6 +549,14 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 | Lead cannot leave | Make another member the team lead first. | PRD §15 |
 | Accent adjusted | Adjusted for readability. | §2.8 |
 | Filter result (screen reader) | Showing {n} of {m} tasks. | NFR-A11Y |
+| Log-in heading | Who are you? | PRD §15.1 |
+| Log-in text | Choose your profile to log in. There is no password, so anyone who uses this browser can choose any profile. | PRD §15.1 |
+| Log-in button (accessible name) | Log in as {name}, {team lead}, {role}. {n} open tasks. | PRD §15.1 |
+| Profile menu | Edit my profile · Log out or switch profile | PRD §15.1 |
+| Log-in toast | Welcome, {name}. · {n} tasks were handed to you since your last visit. · Show my tasks | PRD §15.1 |
+| Attribution | Created by {name} · last change by {name}, {time} ago | PRD §15.1 |
+| Activity rows | {name} created the task · moved it from {stage} to {stage} · handed it to {name} · updated the context · edited the details · restored it after a delete | PRD §15.1 |
+| Cannot remove yourself | You cannot remove yourself. Log in as someone else first. | PRD §15.1 |
 
 ---
 

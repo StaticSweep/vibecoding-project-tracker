@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { ChevronDown, CircleHelp, ListFilter, Plus, Search, Settings, TriangleAlert, UserRound, X } from 'lucide-react';
-import Avatar from './Avatar.jsx';
+import ProfileMenu from './ProfileMenu.jsx';
 import SegmentedControl from './SegmentedControl.jsx';
 import { useAppData } from '../context/AppData.jsx';
 import { TYPES } from '../lib/constants.js';
@@ -11,13 +11,12 @@ export const NO_FILTERS = { owner: 'all', type: 'all', query: '' };
 
 /**
  * App header (DESIGN.md §4.14): a floating glass bar with two rows.
- *   Row 1 — wordmark, project and team, search, Add task, the team lead,
- *           Settings, Help.
+ *   Row 1 — wordmark, project and team, search, Add task, the logged-in
+ *           profile (menu: Edit my profile, Log out), Settings, Help.
  *   Row 2 — filters: My tasks, owner, type, overdue count, Clear filters.
  *           On small screens the row folds away behind a "Filters" button.
  *
- * There is no sign-in. The lead's name shows as "you", and the button opens
- * the team settings.
+ * "My tasks" and "(you)" mean the logged-in profile.
  */
 export default function Header({
   filters,
@@ -29,13 +28,13 @@ export default function Header({
   addButtonRef,
   searchRef,
 }) {
-  const { workspace, team, lead, readOnly } = useAppData();
+  const { workspace, team, currentUser: me, readOnly } = useAppData();
   const ownerId = useId();
   const searchId = useId();
   const filtersId = useId();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const setFilter = (key, value) => onFiltersChange({ ...filters, [key]: value });
-  const mine = lead && filters.owner === lead.id;
+  const mine = filters.owner === me.id;
   const activeCount = [filters.owner !== 'all', filters.type !== 'all', filters.query.trim() !== ''].filter(Boolean).length;
   const subtitle = [workspace.projectName, workspace.teamName].filter((s) => s?.trim()).join(' · ');
 
@@ -92,21 +91,7 @@ export default function Header({
             <Plus aria-hidden="true" className="h-4 w-4" />
             Add task
           </button>
-          {lead && (
-            <button
-              type="button"
-              onClick={() => onOpenSettings('team')}
-              aria-haspopup="dialog"
-              aria-label={`You: ${lead.name}, team lead. Open team settings.`}
-              className={`flex h-9 items-center gap-2 rounded-full border border-line-strong bg-glass/80 pl-1 pr-3 text-left hover:bg-brand-accent ${focusRing}`}
-            >
-              <Avatar member={lead} />
-              <span className="leading-4">
-                <span className="block max-w-[10rem] truncate text-sm font-semibold text-ink">{lead.name}</span>
-                <span className="block text-xs text-ink-muted">Team lead</span>
-              </span>
-            </button>
-          )}
+          <ProfileMenu onEditProfile={() => onOpenSettings('team')} />
           <button type="button" onClick={() => onOpenSettings()} aria-haspopup="dialog" className={buttonSecondary}>
             <Settings aria-hidden="true" className="h-4 w-4" />
             Settings
@@ -143,11 +128,11 @@ export default function Header({
         aria-label="Filter the board"
         className={`${filtersOpen ? 'flex' : 'hidden'} flex-wrap items-center gap-x-3 gap-y-2 border-t border-glass-edge/70 px-5 py-2 md:flex`}
       >
-        {lead && (
+        {me && (
           <button
             type="button"
             aria-pressed={mine}
-            onClick={() => setFilter('owner', mine ? 'all' : lead.id)}
+            onClick={() => setFilter('owner', mine ? 'all' : me.id)}
             className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm font-semibold ${
               mine ? 'border-brand-primary bg-brand-primary text-on-brand' : 'border-line-strong bg-glass/75 text-ink hover:bg-brand-accent'
             } ${focusRing}`}
@@ -176,7 +161,7 @@ export default function Header({
             {team.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.name}
-                {m.id === lead?.id ? ' (you)' : ''}
+                {m.id === me.id ? ' (you)' : ''}
               </option>
             ))}
             <option value="unassigned">Unassigned</option>

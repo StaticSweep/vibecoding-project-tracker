@@ -11,8 +11,9 @@ import { fieldError } from './shared.js';
  *   member  the member to edit, or null to add a new one
  *   team    the current team (for the unique-name check)
  *   onSave  ({ name, email, role }) => void
+ *   submitLabel  optional text for the save button
  */
-export default function MemberForm({ member, team, onSave, onCancel }) {
+export default function MemberForm({ member, team, onSave, onCancel, submitLabel }) {
   const ids = { name: useId(), nameError: useId(), email: useId(), emailError: useId(), emailHelp: useId(), role: useId() };
   const [draft, setDraft] = useState({ name: member?.name ?? '', email: member?.email ?? '', role: member?.role ?? '' });
   const [errors, setErrors] = useState({});
@@ -120,7 +121,7 @@ export default function MemberForm({ member, team, onSave, onCancel }) {
           Cancel
         </button>
         <button type="submit" className={buttonPrimary}>
-          {member ? 'Save member' : 'Add member'}
+          {submitLabel ?? (member ? 'Save member' : 'Add member')}
         </button>
       </div>
     </form>

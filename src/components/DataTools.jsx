@@ -20,7 +20,8 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
  */
 export default function DataTools({ variant = 'footer' }) {
   const toast = useToast();
-  const { tasks, anchors, team, workspace, setTasks, setAnchors, replaceBoard, readOnly } = useAppData();
+  const { tasks, anchors, team, workspace, setTasks, setAnchors, replaceBoard, readOnly, currentUser, login, logout } =
+    useAppData();
   const fileRef = useRef(null);
   const [confirm, setConfirm] = useState(null); // null | 'demo' | 'reset' | 'delete-all' | { import }
 
@@ -54,14 +55,22 @@ export default function DataTools({ variant = 'footer' }) {
     const { import: result } = confirm;
     replaceBoard(result.data);
     setConfirm(null);
-    toast({ message: `Board imported: ${plural(result.data.tasks.length, 'task')}.` });
-    focusBoard();
+    // Stay logged in if the file has a profile with your name; else choose again.
+    const same = currentUser && result.data.team.find((m) => m.name.toLowerCase() === currentUser.name.toLowerCase());
+    if (same) {
+      login(same.id);
+      toast({ message: `Board imported: ${plural(result.data.tasks.length, 'task')}.` });
+      focusBoard();
+    } else {
+      logout();
+    }
   }
 
   function loadDemo() {
-    replaceBoard(buildDemoBoard(todayISO()));
+    const demo = buildDemoBoard(todayISO());
+    replaceBoard(demo);
     setConfirm(null);
-    toast({ message: 'Demo data loaded. You are Dana R., the team lead.' });
+    login(demo.workspace.leadId); // the demo's team lead, Dana R.
     focusBoard();
   }
 
@@ -135,7 +144,7 @@ export default function DataTools({ variant = 'footer' }) {
       {confirm === 'demo' && (
         <ConfirmDialog
           title="Replace your board with demo data?"
-          body="The demo has its own team and 12 tasks. You cannot undo this. Export your board first to keep a copy."
+          body="The demo has its own team and 12 tasks, and you log in as its team lead. You cannot undo this. Export your board first to keep a copy."
           confirmLabel="Load demo data"
           extraAction={{ label: 'Export first', onClick: exportBoard }}
           onConfirm={loadDemo}

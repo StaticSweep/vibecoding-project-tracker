@@ -10,8 +10,8 @@ import { createId } from './ids.js';
  * One project, one team (Q&A). `Task.assignee` holds a member id, or null
  * for Unassigned, so a renamed member keeps their tasks.
  *
- * There is no sign-in. Slopify always acts as the team lead: "you" in the
- * UI, the default owner of new tasks and the "My tasks" filter.
+ * "You" in the UI is the logged-in profile (one click on the log-in screen,
+ * no password; `prefs.currentMemberId`). The team lead is a badge.
  */
 
 export const DEFAULT_WORKSPACE = { projectName: 'Vibecoding project', teamName: '', leadId: null };

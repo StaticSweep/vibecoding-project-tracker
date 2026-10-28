@@ -73,13 +73,14 @@ export default function HelpDialog({ onClose }) {
 
         <section aria-labelledby="help-team">
           <h3 id="help-team" className="font-heading text-base font-semibold">
-            Team lead and data
+            Profiles and data
           </h3>
           <p className="mt-2 flex gap-3 text-sm leading-6 text-ink-muted">
             <Crown aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-brand-primary" />
             <span>
-              There is no sign-in. Slopify always acts as the team lead. Change the lead, the team and the roles in
-              Settings → Project &amp; team.
+              Log in with one click on your profile. There is no password, so anyone who uses this browser can choose
+              any profile. Your changes show your name in each task’s Activity. Change the team, the roles and the team
+              lead in Settings → Project &amp; team.
             </span>
           </p>
           <p className="mt-2 text-sm leading-6 text-ink-muted">

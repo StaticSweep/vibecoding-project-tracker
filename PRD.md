@@ -67,6 +67,18 @@ Task = {
     contextTool: string | null,
     savedAt: string | null,      // ISO timestamp of that version
   }>,
+
+  // Optional, added in schema v4 (log-in, §15; default null / []):
+  createdBy: string | null,      // Member id of the creator
+  updatedBy: string | null,      // Member id of the last change
+  updatedAt: string | null,      // ISO timestamp of the last change
+  activity: Array<{              // who did what, newest first, max 50
+    at: string,                  // ISO timestamp
+    by: string | null,           // Member id
+    type: 'created' | 'moved' | 'handoff' | 'edited' | 'context' | 'restored',
+    from?: string | null,        // stage id (moved) or Member id (handoff)
+    to?: string | null,
+  }>,
 }
 
 // One of four pinned deliverable slots.
@@ -89,7 +101,7 @@ Member = {
 Workspace = {
   projectName: string,
   teamName: string,
-  leadId: string | null,         // the team lead; Slopify always acts as the lead
+  leadId: string | null,         // the team lead (a badge; log-in is separate, §15.1)
 }
 ```
 
@@ -124,7 +136,7 @@ Fill these in before tagging `prd-done`:
 | Teammate B | `<TODO>` | `<TODO>` |
 | Teammate C | `<TODO>` | `<TODO>` |
 
-**Changed after the client Q&A (§15).** The team is no longer fixed in code. Add, edit and remove members (name, email, role) in **Settings → Project & team**. One member is the **team lead**. There is no sign-in: Slopify always acts as the team lead. A new board starts with three placeholder members; rename them.
+**Changed after the client Q&A (§15).** The team is no longer fixed in code. Add, edit and remove members (name, email, role) in **Settings → Project & team**. One member is the **team lead** (a badge). **Log-in:** the log-in screen lists every profile; one click logs in, with no password. "You" in the app is the logged-in profile: "My tasks", the default owner of new tasks, and the activity log. A new board starts with three placeholder members; rename them.
 
 ## 9. Milestone ownership
 
@@ -191,7 +203,7 @@ On the board, each card shows how many versions its prompt has (for example "Cla
 
 ## 12. Out of scope (do not build)
 
-- Authentication / accounts. There is no sign-in: Slopify always acts as the team lead (client decision, §15).
+- Passwords and real authentication. Log-in is one click on a profile, with no password (client decision, §15).
 - Real GitHub integration.
 - A real backend / shared database.
 - Multi-team support and multiple projects (client: "one project for one team first").
@@ -527,7 +539,7 @@ These requirements make the §5 data model concrete: where data is stored, what 
 | `vibetracker.workspace` | Project name, team name, team lead (v3) | `Workspace` (JSON) | Must |
 | `vibetracker.meta` | Storage metadata | `{ schemaVersion: number }` (JSON) | Should |
 | `vibetracker.tasks.backup` / `vibetracker.anchors.backup` | Raw string of an unreadable value, kept for recovery | string | Should |
-| `vibetracker.prefs` | Per-browser settings, never exported | `{ theme, textSize, accent, motion, transparency, promptIncludesLinks, welcomeDismissed }` (JSON) | Should |
+| `vibetracker.prefs` | Per-browser settings, never exported | `{ currentMemberId, lastSeen, theme, textSize, accent, motion, transparency, promptIncludesLinks, welcomeDismissed }` (JSON) | Should |
 
 - [x] **DR-STO-01** · Must — All keys use the `vibetracker.` prefix so the app's data is easy to find, export and reset, and never collides with other apps on the same origin.
 - [x] **DR-STO-02** · Must — Values are stored as JSON (UTF-8 text) via the `useLocalStorage` hook; no other storage mechanism (cookies, IndexedDB, sessionStorage) is used for app data.
@@ -619,7 +631,7 @@ The following are calculated from stored fields on every render and must **not**
 
 #### 14.4.7 Schema versioning & migration
 
-- [x] **DR-MIG-01** · Should — `vibetracker.meta.schemaVersion` records the data version. **v0** = tasks without context fields (pre-M9); **v1** = full §5 model; **v2** = adds `contextHistory` (M12); **v3** = team and workspace in storage, `assignee` is a member id (§15).
+- [x] **DR-MIG-01** · Should — `vibetracker.meta.schemaVersion` records the data version. **v0** = tasks without context fields (pre-M9); **v1** = full §5 model; **v2** = adds `contextHistory` (M12); **v3** = team and workspace in storage, `assignee` is a member id (§15); **v4** = `createdBy`, `updatedBy`, `updatedAt`, `activity` on tasks (§15).
 - [x] **DR-MIG-02** · Must — On load, a single `migrate(data, fromVersion)` step upgrades older data before normalisation. Missing `meta` is treated as v0.
 - [x] **DR-MIG-03** · Must — Migrations are additive only (new fields with defaults) and idempotent; they never delete user content.
 - [x] **DR-MIG-04** · Should — Data with a `schemaVersion` **newer** than the running app is not overwritten; the app shows a read-only notice ("This board was saved by a newer version").
@@ -687,7 +699,7 @@ Applies to FR-DATA-04 / FR-DATA-05.
 | 4 | localStorage is per-browser, per-device | A handoff is visible only on the machine where it was made; JSON export/import (FR-DATA-04/05, §14.4.9) is the workaround | **Agreed** |
 | 5 | Should Copy-as-Prompt include anchor links? | No (FR-M10-10 is a *Could*) | Open — decide in M10 |
 | 6 | Time pressure (≈3 h build window) | All *Must* items in milestone order, then *Should* items | Ongoing |
-| 7 | Login without a backend | No sign-in. Slopify always acts as the team lead | **Decided** by the client (§15) |
+| 7 | Login without a backend | One click on a profile logs in; no passwords. The profile is remembered per browser until "Log out" | **Decided** by the client (§15, round 2) |
 | 8 | Renamed team members | `assignee` stores a member id (schema v3), so a rename keeps every task | **Decided** (§15) |
 | 9 | Mobile | Layout reflows to 320 px (WCAG 1.4.10), because accessibility is a top priority | **Decided** (§15) |
 | 10 | Should Copy-as-Prompt include anchor links? | Optional, off by default (Settings → Project & team) | **Closes #5** |
@@ -722,8 +734,20 @@ The client answered our open questions after the 13 milestones. This table shows
 | Accessibility is important — in design and in code | Text size 100 / 115 / 130 %, dark theme, reduce motion, reduce transparency, reflow to 320 px, skip link, card shortcuts, screen-reader card summaries, focus management, axe-core checks in both themes |
 | Accent: sensible default, user-definable as a bonus | Teal by default; Ocean, Graphite, Cocoa or a custom colour. Custom colours are adjusted until they pass WCAG AA |
 | Any popular web framework | React + Vite + Tailwind stay. Vitest added for the pure helpers (`npm test`) |
-| Security not important; login needed (without a backend) | **No sign-in.** Slopify always acts as the team lead. The lead is chosen in Settings |
+| Security not important; login needed (without a backend) | **One-click log-in, no passwords** (round 2, below) |
 | Deployment needed for submission | Handled by the team; `npm run build` stays green |
+
+### 15.1 Round 2 — features the app needs to function
+
+The client asked for a working log-in (no passwords) and the features a shared tracker needs once there are real users.
+
+- **Log-in screen.** Every profile is one button: one click logs in. "Add a new profile" creates a member and logs in. The choice is remembered in this browser (`prefs.currentMemberId`) until "Log out". A removed profile, or an import without your name, returns to the log-in screen.
+- **Profile menu** in the header: Edit my profile · Log out or switch profile.
+- **"You" is the logged-in profile.** "My tasks", "(you)" in the owner filter, the default owner of new tasks and the hand-off toast all follow it. You cannot remove yourself; the team lead stays a badge and cannot be removed either.
+- **Attribution (schema v4).** Each task records who created it and who changed it last; the task modal shows "Created by … · last change by …, 2 h ago".
+- **Activity log.** Each move, handoff, edit, context update, creation and undo-restore is recorded with the profile and time (max 50 per task), shown under "Activity" in the task modal.
+- **"Handed to you" notice.** At log-in, a toast says how many tasks someone else handed to you since your last visit, with "Show my tasks".
+- **Data tools respect log-in.** Load demo data logs you in as the demo's team lead; Import keeps you logged in when the file has a profile with your name; Delete all data returns to the log-in screen.
 
 ---
 

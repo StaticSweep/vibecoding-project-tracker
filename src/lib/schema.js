@@ -7,8 +7,9 @@ import { createMember } from './team.js';
  *   v1 — the full PRD §5 model
  *   v2 — adds the optional M12 `contextHistory` list
  *   v3 — the team lives in `vibetracker.team`; `Task.assignee` is a member id
+ *   v4 — tasks record `createdBy`, `updatedBy`, `updatedAt` and `activity`
  */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const isTask = (t) => t && typeof t === 'object' && !Array.isArray(t);
 
@@ -57,6 +58,13 @@ export function migrateData({ tasks, team }, fromVersion, nowIso = new Date().to
       if (!isTask(t) || typeof t.assignee !== 'string' || ids.has(t.assignee)) return t;
       return { ...t, assignee: byName.get(t.assignee.trim().toLowerCase()) ?? null };
     });
+  }
+
+  // v3 → v4: attribution fields, empty for older tasks (nobody knows who).
+  if (fromVersion < 4 && Array.isArray(nextTasks)) {
+    nextTasks = nextTasks.map((t) =>
+      isTask(t) ? { createdBy: null, updatedBy: null, updatedAt: null, activity: [], ...t } : t,
+    );
   }
 
   return { tasks: nextTasks, team: nextTeam };
