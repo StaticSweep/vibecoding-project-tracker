@@ -96,7 +96,9 @@ export default function PromptHistory({ task, draft, today, onRestore }) {
               {expanded && (
                 <pre
                   id={panelId}
-                  className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-surface-page px-3 py-2 font-mono text-caption leading-5 text-ink"
+                  tabIndex={0}
+                  aria-label={`Version ${number}`}
+                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-primary mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-surface-page px-3 py-2 font-mono text-caption leading-5 text-ink"
                 >
                   {v.context}
                 </pre>

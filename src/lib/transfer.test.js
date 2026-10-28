@@ -8,6 +8,8 @@ const tasks = [
   {
     id: 't1', title: 'Task', description: '', type: 'bug', status: 'todo', assignee: 'm1',
     dueDate: null, createdDate: today, context: '', contextTool: null, contextUpdatedAt: null, contextHistory: [],
+    createdBy: 'm1', updatedBy: 'm1', updatedAt: '2026-10-26T10:00:00.000Z',
+    activity: [{ at: '2026-10-26T10:00:00.000Z', by: 'm1', type: 'created' }],
   },
 ];
 const workspace = { projectName: 'Slopify', teamName: 'Slop squad', leadId: 'm1' };

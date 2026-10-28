@@ -4,11 +4,11 @@ import { endSentence } from '../lib/team.js';
 import { buttonSecondary, glassPanel, iconButton } from '../lib/ui.js';
 
 /**
- * First-run hint. It never blocks the board: there is no sign-in or setup
- * step, and Slopify always acts as the team lead. Dismissed per browser.
+ * First-run hint after the first log-in. It never blocks the board.
+ * Dismissed per browser.
  */
 export default function WelcomeCard({ onSetUpTeam }) {
-  const { lead, prefs, setPrefs } = useAppData();
+  const { currentUser, prefs, setPrefs } = useAppData();
   if (prefs.welcomeDismissed) return null;
 
   const dismiss = () => setPrefs((p) => ({ ...p, welcomeDismissed: true }));
@@ -24,8 +24,8 @@ export default function WelcomeCard({ onSetUpTeam }) {
           Welcome to Slopify. Track the task. Keep the context.
         </h2>
         <p className="text-sm leading-5 text-ink-muted">
-          {endSentence(lead ? `You are the team lead, ${lead.name}` : 'You are the team lead')} Add your own name, your team and
-          their roles.
+          {endSentence(`You are logged in as ${currentUser.name}`)} Add your team, their roles and their email
+          addresses.
         </p>
       </div>
       <button

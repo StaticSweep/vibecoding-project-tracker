@@ -1,10 +1,10 @@
 # Slopify — Design
 
-**Status:** Complete for `design-done` (M3). Updated after the client Q&A (PRD §15): dark theme, accent colour, text size, reflow, team and settings components. The colour tokens in §2 are CSS variables in `src/index.css`. `tailwind.config.js` refers to them. The fonts in §3 go into `index.html`.
+**Status:** Current for Slopify schema v4 (2026-10-28). It covers the hackathon design (M3) and the client Q&A refinement: dark theme, accent colour, text size, reflow, team, log-in, settings and activity. The colour tokens in §2 are CSS variables in `src/index.css`. `tailwind.config.js` refers to them. The fonts in §3 are in `index.html`.
 
 **Who owns this.** One developer builds Slopify. Slopify is a tool for **teams**. All design decisions in this document are for a team of users.
 
-**Why this file exists.** This document gives the visual rules for Slopify. Use it for every screen, component and line of text. If a rule in this document and a rule in PRD §14 are different, the PRD is correct. Then, change this document.
+**Why this file exists.** This document gives the visual rules for Slopify. Use it for every screen, component and line of text. The requirements are in [REQUIREMENTS.md](REQUIREMENTS.md). If a rule in this document and a requirement are different, the requirement is correct. Then, change this document.
 
 ---
 
@@ -58,7 +58,7 @@ This document uses **ASD-STE100 Simplified Technical English (STE)**. Use the sa
 
 | Hue | Meaning |
 |---|---|
-| Teal | Brand: primary buttons, links, focus ring |
+| Teal (default accent, §2.8) | Brand: primary buttons, links, focus ring |
 | Indigo | Task type: feature |
 | Magenta | Task type: bug |
 | Green | Due state: safe |
@@ -77,6 +77,8 @@ This document uses **ASD-STE100 Simplified Technical English (STE)**. Use the sa
 All contrast values in this section use the WCAG 2.2 formula.
 
 ### 2.1 Brand and surface
+
+The values in §2.1–§2.4 are for the light theme. The dark values are in §2.7.
 
 | Token | Tailwind class example | Hex | Where it shows | Contrast |
 |---|---|---|---|---|
@@ -135,7 +137,7 @@ Avatars do **not** use colour to identify a person. The initials and the name id
 | Ring | 1 px `line-strong` (`#8A93A3`) | 3.10:1 on card |
 | Unknown assignee | Lucide `user` icon, no initials, label "Unassigned" | — |
 
-- The avatar is 24 × 24 px (the minimum target size).
+- The avatar is 24 × 24 px on cards and in the header button. It is 32 × 32 px in the team list, on the log-in screen and in the profile menu.
 - The name shows next to the avatar or in the accessible name of the avatar. Do not show the name only in a tooltip.
 
 ### 2.5 Contrast pairs to check
@@ -147,11 +149,11 @@ Do this check after each change to §2. Use a WCAG contrast checker.
 3. Check `text-muted` on each tint. The minimum is 4.5:1.
 4. Look at the board in a colour-blindness simulator (Chrome DevTools → Rendering → *Emulate vision deficiencies*).
 5. Make sure that each state is clear from its label and icon alone.
-6. Check `text-muted` on the thinnest glass (60 % white) over the strongest backdrop colour. The minimum is 4.5:1 (§2.6).
+6. Check `text-muted` on the thinnest glass (60 % panel) over the strongest backdrop colour, in the two themes. The minimum is 4.5:1 (§2.6, §2.7).
 
 ### 2.6 Glass surfaces (iOS style)
 
-The page has a soft colour background. Surfaces on top are white glass: part transparent, with a blur behind them.
+The page has a soft colour background. Surfaces on top are glass: part transparent, with a blur behind them. In the light theme the glass is white. In the dark theme it is dark (§2.7).
 
 **Backdrop.** Three large, blurred colour fields sit behind all content. They are decoration only.
 
@@ -163,21 +165,21 @@ The page has a soft colour background. Surfaces on top are white glass: part tra
 
 **Glass levels.** Use only these four levels. Text never sits directly on the backdrop.
 
-| Level | Class in `src/lib/ui.js` | White | Use |
+| Level | Class in `src/lib/ui.js` | `glass` opacity | Use |
 |---|---|---|---|
-| Panel | `glassPanel` | 60 % | Header bar, Anchor Board, columns, footer note |
+| Panel | `glassPanel` | 60 % | Header bar, Anchor Board, columns, footer note, log-in panel, welcome card |
 | Card | `glassCard` | 85 % | Task cards (no due date), filled anchor slots |
-| Sheet | `glassSheet` | 95 % | Modals and dialogs |
-| Field | `inputBase` | 100 % | Inputs, selects, textareas (always solid) |
+| Sheet | `glassSheet` | 95 % | Modals, dialogs and the profile menu |
+| Field | `inputBase` | solid `field` | Inputs, selects, textareas (always solid) |
 
-Each glass level has a 1 px white border at 70–80 % opacity, a soft wide shadow (`shadow-glass`, `shadow-glass-sm`, `shadow-glass-lg`) and a background blur of 24 px.
+Each glass level has a 1 px `glass-edge` border at 70–80 % opacity, a soft wide shadow (`shadow-glass`, `shadow-glass-sm`, `shadow-glass-lg`) and a background blur of 24 px.
 
 **Rules:**
 
 - Due tints (§2.3) on cards are 90 % opaque, so the tint stays clear.
-- The modal backdrop is `text-primary` at 30 % with a small blur.
-- Toasts are dark glass: `text-primary` at 85 % with a blur.
-- **Contrast.** The worst case is `text-muted` on panel glass over lavender: 4.93:1. Do not make the backdrop stronger or the glass thinner without a new check (§2.5).
+- The modal backdrop is `scrim` at 30 % with a small blur (50 % and no blur with reduced transparency).
+- Toasts use the inverse colours (`inverse` at 85 %, `on-inverse` text) with a blur: dark in the light theme, light in the dark theme.
+- **Contrast.** The worst case in the light theme is `text-muted` on panel glass over lavender: 4.93:1. In the dark theme it is 6.83:1 (§2.7). Do not make the backdrop stronger or the glass thinner without a new check (§2.5).
 - **Reduce transparency.** When the user sets "reduce transparency" in the operating system or in Settings, all glass becomes solid `surface-card` and the blur stops (`reduce-transparency:` variant in `tailwind.config.js`).
 - **Glass tokens.** Glass uses `bg-glass/…` and `border-glass-edge/…`, not `white`. In the dark theme, glass is dark (§2.7).
 
@@ -248,8 +250,9 @@ All fonts come from Google Fonts. These fonts help readers with low vision and r
 
 | Role | Font | Size / line height | Weight | Notes |
 |---|---|---|---|---|
-| Wordmark | Lexend | 24 / 32 px | 600 | `brand-primary` |
-| Page subtitle (tagline) | Atkinson Hyperlegible Next | 14 / 20 px | 400 | `text-muted` |
+| Wordmark | Lexend | 28 / 32 px | 600 | `brand-primary` (`text-wordmark`) |
+| Page subtitle (project · team) | Atkinson Hyperlegible Next | 14 / 20 px | 400 | `text-muted` |
+| Log-in heading | Lexend | 24 / 32 px | 600 | "Who are you?" |
 | Modal heading | Lexend | 20 / 28 px | 600 | — |
 | Column heading | Lexend | 14 / 20 px | 600 | Uppercase, letter spacing 0.05 em, with the task count |
 | Card title | Atkinson Hyperlegible Next | 15 / 22 px | 600 | Maximum 2 lines, then an ellipsis (FR-M4-13) |
@@ -289,7 +292,7 @@ All fonts come from Google Fonts. These fonts help readers with low vision and r
 |---|---|
 | Spacing | Use a 4 px scale: 4, 8, 12, 16, 24, 32 px. |
 | Corner radius | Badges, avatars, buttons, selects and segmented controls: full (pill). Inputs and textareas: 12 px (`rounded-xl`). Cards and anchor slots: 16 px (`rounded-2xl`). Columns, header bar, Anchor Board and modals: 24 px (`rounded-3xl`). |
-| Borders | Glass: 1 px white at 70–80 % (§2.6). Inputs, selects and secondary buttons: 1 px `line-strong` (3:1). |
+| Borders | Glass: 1 px `glass-edge` at 70–80 % (§2.6). Inputs, selects and secondary buttons: 1 px `line-strong` (3:1). |
 | Shadows | Cards: `shadow-glass-sm`, `shadow-glass` on hover and focus. Panels: `shadow-glass`. Modals and toasts: `shadow-glass-lg`. |
 
 ### 4.3 Card anatomy
@@ -312,7 +315,8 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 - Cards are light. A 1 px border gives the only weight. A small shadow shows on hover.
 - The full card is a button that opens the modal in edit mode (FR-M5-08).
 - Controls on the card (copy, Hand off to…, stage, move buttons) do not open the modal (FR-M7-04).
-- When a card is in focus, it shows the focus ring (§4.12).
+- When a card is in focus, it shows the focus ring (§4.12). The keys in §4.19 act on the focused card.
+- For screen readers, the title button is described by one sentence: type, due state, owner with role, context and versions.
 
 ### 4.5 Move controls (no drag)
 
@@ -327,11 +331,12 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 | Type | Look | Use |
 |---|---|---|
-| Primary | Solid `brand-primary`, white text; `brand-primary-hover` on hover | One per view: "Add task", "Create task", "Save changes" |
-| Secondary | White at 80 %, 1 px `line-strong` border, `text-primary`; `brand-accent` on hover | "Cancel", "Export", "Insert template" |
-| Ghost | Round, no border, `text-muted`; white at 80 % on hover | Icon buttons on cards, the close button of the modal |
-| Destructive | Outline: 1 px `line-strong`, `text-primary`, Lucide `trash-2` icon | "Delete task" in the modal. It is not red (PRD §14.6 #2). |
-| Danger | Solid `danger`, white text | The confirm button in the delete dialog only |
+| Primary | Solid `brand-primary`, `on-brand` text; `brand-primary-hover` on hover | One per view: "Add task", "Create task", "Save changes", "Add and log in" |
+| Secondary | `glass` at 80 %, 1 px `line-strong` border, `text-primary`; `brand-accent` on hover | "Cancel", "Export", "Insert template", "Set up the team" |
+| Ghost | Round, no border, `text-muted`; `glass` at 80 % on hover | Icon buttons on cards, close buttons |
+| Destructive | Outline: 1 px `line-strong`, `text-primary`, Lucide `trash-2` or `rotate-ccw` icon | "Delete task", "Reset board", "Delete all data". It is not red (PRD §14.6 #2). |
+| Danger | Solid `danger`, `on-strong` text | The confirm button of a destructive dialog only |
+| Profile tile | Large `glassCard` button: avatar, name, badge, role, open tasks | The log-in screen only (§4.23) |
 
 **Rules:**
 
@@ -345,7 +350,8 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 ### 4.7 Form fields
 
 - Each field has a visible label above the field. Do not use a placeholder as the label.
-- Inputs have a 1 px `line-strong` border, a solid white background, a 12 px corner radius and 16 px text. Inputs are never transparent.
+- Inputs have a 1 px `line-strong` border, a solid `field` background, a 12 px corner radius and 16 px text. Inputs are never transparent.
+- A required field shows "(required)" in its label. An optional field can show "(optional)".
 - An invalid field gets a 2 px `due-overdue` border, an error icon and an error message below the field. The field gets `aria-invalid` and `aria-describedby` (NFR-A11Y-07).
 - Helper text is `text-muted`, 13 px, below the field.
 - The type control is a segmented control. Each part shows the type icon, the label and the type colour (FR-M6-03).
@@ -353,28 +359,30 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 ### 4.8 Modal
 
-- The modal is a glass sheet (§2.6) in the centre of the screen. Its maximum width is 640 px.
-- The backdrop is `text-primary` at 30 % opacity with a small blur.
+- The modal is a glass sheet (§2.6) in the centre of the screen. The maximum widths are: task modal 640 px, Help 704 px, Settings 768 px, confirm dialog 400 px.
+- The backdrop is `scrim` at 30 % opacity with a small blur. Below 640 px, the modal has a 12 px margin.
 - The modal heading is "New task" or "Edit task" (FR-M5-07).
 - The action bar is at the bottom and stays visible. "Delete task" is on the left. "Cancel" and the primary button are on the right (FR-M5-12).
 - If the modal is taller than the viewport, the body of the modal scrolls (FR-M5-19).
+- In edit mode, the body starts with the attribution caption and ends with "Activity" (§4.25).
 
 ### 4.9 Confirm dialog
 
 - The confirm dialog is a small modal with a maximum width of 400 px.
-- The dialog has one question, one sentence about the result, and two buttons.
+- The dialog has one question, one sentence about the result, and two buttons. A dialog that replaces data also has "Export first" on the left.
 - The focus starts on "Cancel" (FR-APP-06).
 
 ### 4.10 Toasts
 
 - Toasts show at the bottom right of the screen. A maximum of 3 toasts show at the same time.
-- A toast is dark glass: `text-primary` at 85 % with a blur, white text and a 16 px corner radius. A toast for an error has an alert icon in `due-overdue-bg`. The strong `due-overdue` colour has too little contrast on the dark toast.
-- Toasts fade in and fade out in 200 ms. They close after 4 seconds. Each toast has a close button.
+- A toast uses the inverse colours (§2.6) with a 16 px corner radius. A toast for an error has an alert icon in `due-overdue-bg`. The strong `due-overdue` colour has too little contrast on the toast.
+- Toasts fade in and fade out in 200 ms. They close after 4 seconds. A toast with Undo after a delete stays 5 seconds. The log-in notice stays 8 seconds. Each toast has a close button.
+- A toast can have one action ("Undo", "Show my tasks").
 - Toasts use an `aria-live="polite"` region (FR-APP-05).
 
 ### 4.11 Empty states
 
-- An empty state has a 1 px dashed `line-strong` border, white at 50 %, `text-muted` text and one next action.
+- An empty state has a 1 px dashed `line-strong` border, `glass` at 50 %, `text-muted` text and one next action.
 - Empty states are never sad. They tell the user what to do next.
 
 ### 4.12 Focus
@@ -387,16 +395,18 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 - The Anchor Board has four slots in this order: Presentation, Demo, Report, Documentation.
 - An empty slot has the empty-state style and the text "Add link".
 - A filled slot shows the label, the host name of the link and a Lucide `external-link` icon.
-- The link opens in a new tab. A separate pencil button opens the edit field (FR-M11-06).
+- The link opens in a new tab. A separate pencil button opens the edit field (FR-M11-06). A copy button copies the link.
+- The slots show 4 in a row from 1280 px, 2 from 640 px and 1 below 640 px.
 - Above the slots, a caption shows the progress, for example "2 of 4 links added".
 
 ### 4.14 Header and footer
 
-- The header has two rows. Row 1: the wordmark, the project and team name, the search field, "Add task", the team lead, "Settings" and "Help". Row 2: the filters ("My tasks", owner, type, overdue count, "Clear filters").
+- The header has two rows. Row 1: the wordmark, the project and team name, the search field, "Add task", the logged-in profile (§4.24), "Settings" and "Help". Row 2: the filters ("My tasks", owner, type, overdue count, "Clear filters").
 - Below 768 px, row 2 folds behind a "Filters" button with `aria-expanded`.
 - The "Add task" button is always visible (FR-APP-04).
 - The footer shows the privacy note (§5) and the "Export", "Import", "Load demo data" and "Reset board" buttons.
 - A skip link ("Skip to the board") is the first Tab stop.
+- The header sits on a higher layer (`relative z-20`) than the glass panels below it, so the profile menu is never covered.
 
 ### 4.15 Icons
 
@@ -415,7 +425,7 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 
 ### 4.17 Motion
 
-- Toasts fade in 200 ms. Card hover shadows change in 150 ms.
+- Toasts fade in 200 ms. Card hover shadows change in 150 ms. Button and link colours change in 150 ms on hover. Disclosure chevrons turn in 150 ms.
 - There is no other animation.
 - When the user sets `prefers-reduced-motion`, or "Reduce motion" in Settings, remove all animation (NFR-A11Y-09).
 
@@ -439,14 +449,32 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 ### 4.21 Team list and team lead
 
 - Each member row shows the avatar, the name, the role, the number of tasks and the email as a link. The email link is underlined.
-- One member has the "Team lead" badge (Lucide `crown`). There is no sign-in: Slopify always acts as the team lead.
-- "Remove" is not available for the team lead. The tooltip tells why.
+- One member has the "Team lead" badge (Lucide `crown`). The logged-in profile has a "You" badge.
+- "Remove" is not available for the team lead or for yourself. The tooltip tells why.
 - Before a removal, a dialog asks who gets the member's tasks. The default is the team lead.
 
 ### 4.22 Welcome card
 
 - On the first visit, a welcome card shows above the Anchor Board. It never blocks the board.
 - It has one secondary button ("Set up the team") and a close button.
+
+### 4.23 Log-in screen
+
+- The log-in screen is one glass panel in the centre of the page. The heading is "Who are you?" and gets the focus.
+- Each profile is one large button: avatar, name, "Team lead" badge, role and the number of open tasks. One click logs in. There is no password.
+- The text under the heading tells the user that anyone who uses the browser can choose any profile.
+- "Add a new profile" opens the member form. Its button is "Add and log in".
+
+### 4.24 Profile menu
+
+- The header button shows the avatar, the name and "Team lead" or the role. It opens a small menu (`aria-expanded`).
+- The menu has "Edit my profile" and "Log out or switch profile". Esc, a click outside or Tab out closes it.
+
+### 4.25 Attribution and activity
+
+- In the edit modal, a caption under the header shows "Created by … · last change by …, {time} ago".
+- An "Activity" disclosure at the end of the form lists each change, newest first: an icon, a sentence and the time. A removed member shows as "A former team member".
+- At log-in, a toast tells the user how many tasks were handed to them. Its action is "Show my tasks".
 
 ---
 
@@ -467,7 +495,7 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 | "+" button label | **Add task** |
 | Empty column placeholder | **No tasks here. Add a task or move a task to this stage.** |
 | Toast after "Copy as Prompt Context" | **Copied. Paste it into your AI tool.** |
-| Confirm-delete message | **Delete this task? You cannot undo this.** |
+| Confirm-delete message | **Delete this task? You can undo this for 5 seconds.** |
 | Handoff toast (M7 `task-owner`) | **You gave this task to {name}.** |
 
 **Other lines:**
@@ -503,8 +531,13 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 | Anchor progress | {n} of 4 links added | FR-M11-07 |
 | Invalid anchor URL | Use a web address that starts with http:// or https://. | FR-M11-05 |
 | Undo (in toasts) | Undo | FR-M5-14, FR-M7-07 |
-| Load demo data (confirm) | Replace your board with demo data? You cannot undo this. | FR-M13-03 |
-| Reset board (confirm) | Delete all tasks and links? You cannot undo this. | FR-M13-05 |
+| Load demo data (confirm) | Replace your board with demo data? · The demo has its own team and 12 tasks, and you log in as its team lead. You cannot undo this. Export your board first to keep a copy. | FR-M13-03 |
+| Reset board (confirm) | Delete all tasks and links? · Your team and settings stay. You cannot undo this. | FR-M13-05 |
+| Reset board (toast) | The board is empty. Your team is still here. | FR-M13-05 |
+| Delete all data (confirm) | Delete all Slopify data in this browser? · This deletes the board, the team and your settings. Slopify then starts again with example tasks. You cannot undo this. | FR-DATA-07 |
+| Export (toast) | Exported {n} tasks. The file is in your downloads. | FR-DATA-04 |
+| Import (toast) | Board imported: {n} tasks. | FR-DATA-05 |
+| Copy link (toast) | Link copied. · Slopify cannot copy the link. | FR-M11-09 |
 | Storage full | Slopify cannot save your changes. The browser storage is full. Export your board now. | DR-CAP-03, NFR-REL-04 |
 | Damaged data | Slopify cannot read some saved data. A backup copy is in the browser. | DR-INT-01 |
 | Newer data version | A newer version of Slopify saved this board. You can read it, but you cannot change it. | DR-MIG-04 |
@@ -515,74 +548,91 @@ A card shows a maximum of five items (NFR-USE-08). The description does not show
 | Version buttons | Show · Hide · Restore | M12 |
 | Restore tooltip | Put this version in the Context field. Save to keep it. | M12 |
 | Card version count | {tool} · v{n} | M12 |
-| Confirm-delete message (with Undo) | Delete this task? You can undo this for 5 seconds. | FR-M5-14 |
 | Delete toast | Task deleted. · Undo | FR-M5-14 |
 | Import confirm | Replace {n} tasks with {m} tasks and {k} team members from “{file}”? You cannot undo this. | DR-IMP-03 |
 | Import error | Slopify cannot read this file. Choose a file that Slopify exported. | DR-IMP-01 |
 | Import from newer version | A newer version of Slopify made this file. Update Slopify, then try again. | DR-IMP-01 |
-| Reset confirm body | Your team and settings stay. You cannot undo this. | FR-M13-05 |
 | Storage warning | Your board is almost too big for this browser. Export it, then remove old contexts. | DR-CAP-02 |
-| Welcome card | Welcome to Slopify. Track the task. Keep the context. · You are the team lead, {name}. Add your own name, your team and their roles. | PRD §15 |
-| Team lead (header) | {name} · Team lead | PRD §15 |
-| Member name error | Type a name. · A team member has this name. Use a different name. | PRD §15 |
-| Member email error | Type an email address, for example sam@example.com. | PRD §15 |
-| Email helper | For contact only. Slopify never sends email. | PRD §15 |
-| Remove member | Remove {name} from the team? · {name} has {n} tasks. Choose who gets them. | PRD §15 |
-| Lead cannot leave | Make another member the team lead first. | PRD §15 |
-| Accent adjusted | Adjusted for readability. | §2.8 |
-| Filter result (screen reader) | Showing {n} of {m} tasks. | NFR-A11Y |
+| Welcome card | Welcome to Slopify. Track the task. Keep the context. · You are logged in as {name}. Add your team, their roles and their email addresses. | FR-WELC-01 |
+| Profile button (header) | {name} · Team lead (or the role) | FR-AUTH-06 |
+| Member name error | Type a name. · A team member has this name. Use a different name. | FR-TEAM-03 |
+| Member email error | Type an email address, for example sam@example.com. | FR-TEAM-03 |
+| Email helper | For contact only. Slopify never sends email. | FR-TEAM-09 |
+| Team toasts | {name} joined the team. · {name} left the team. · {name} is now the team lead. | FR-TEAM-03/05/07 |
+| Remove member | Remove {name} from the team? · {name} has {n} tasks. Choose who gets them. | FR-TEAM-05 |
+| Lead cannot leave | Make another member the team lead first. | FR-TEAM-06 |
+| Accent adjusted | Adjusted for readability. | FR-APPR-06 |
+| Filter result (screen reader) | Showing {n} of {m} tasks. | NFR-FLT-01 |
+| Log-in heading | Who are you? | FR-AUTH-01 |
+| Log-in text | Choose your profile to log in. There is no password, so anyone who uses this browser can choose any profile. | NFR-AUTH-02 |
+| Log-in button (accessible name) | Log in as {name}, {team lead}, {role}. {n} open tasks. | NFR-AUTH-03 |
+| Add profile button | Add a new profile · Add and log in | FR-AUTH-04 |
+| Profile menu | Edit my profile · Log out or switch profile | FR-AUTH-06 |
+| Log-in toast | Welcome, {name}. · {n} tasks were handed to you since your last visit. · Show my tasks | FR-ACT-07 |
+| Attribution | Created by {name} · last change by {name}, {time} ago | FR-ACT-04 |
+| Activity rows | {name} created the task · moved it from {stage} to {stage} · handed it to {name} · made it Unassigned · updated the context · edited the details · restored it after a delete | FR-ACT-05 |
+| Removed member in activity | A former team member | FR-ACT-06 |
+| Cannot remove yourself | You cannot remove yourself. Log in as someone else first. | FR-TEAM-06 |
 
 ---
 
 ## 6. Logo / wordmark
 
 - **Product name:** Slopify
-- **Wordmark style:** The word "Slopify" in Lexend, 24 px, weight 600, `brand-primary`. There is no icon.
-- **Tagline:** "Track the task. Keep the context." Use the same tagline in PRD §11.
+- **Wordmark style:** The word "Slopify" in Lexend, 28 px, weight 600, `brand-primary`. There is no icon in the app. The favicon is a rounded teal square with a white "S".
+- **Tagline:** "Track the task. Keep the context." It shows in the welcome card and in PRD §11.
 - **Browser tab title:** Slopify
 
 ---
 
-## 7. Out of scope (this hackathon)
+## 7. Out of scope
 
-These items are not part of `design-done`:
+These items are not part of the design:
 
-- ~~A dark mode toggle~~ — added after the client Q&A (§2.7).
-- ~~Multiple themes~~ — one brand, with a light and a dark theme and a choice of accent (§2.8).
 - Animation other than the items in §4.17.
 - Drag-and-drop (§4.5).
 - A custom icon set. Use Lucide icons only.
 - Colour as the identity of a person (§2.4).
+- More than one brand. The user can choose a light or dark theme (§2.7) and an accent (§2.8). Nothing else changes.
 
 ---
 
 ## 8. Accessibility checks
 
-Do these checks before you push each tag from M4 to M13. The target is WCAG 2.2 AA on desktop.
+Do these checks before each release. The target is WCAG 2.2 AA at every width from 320 px.
 
 1. Do the contrast checks in §2.5.
-2. Do not use the mouse. Do the PRD §4 user flow with the keyboard only.
+2. Do not use the mouse. Do the PRD §4 user flows with the keyboard only, starting at the log-in screen.
 3. Make sure that the focus ring shows on each item.
 4. Open the modal. Make sure that the modal keeps the focus.
 5. Push Esc. Make sure that the focus goes back to the item that opened the modal.
 6. Set the browser zoom to 200 %, then set the window width to 320 px. Make sure that you can use all functions without horizontal scroll. Set the text size to 130 % in Settings.
 7. Set `prefers-reduced-motion`. Make sure that no animation occurs.
-8. Do a scan with Lighthouse or axe DevTools in the light theme and in the dark theme. The Lighthouse accessibility score must be a minimum of 90. There must be no critical issues.
+8. Do a scan with Lighthouse or axe DevTools in the light theme and in the dark theme. Reload the page after each theme change before the scan. The Lighthouse accessibility score must be a minimum of 90. There must be no critical issues.
+9. Run `npm test` and `npm run build`. Both must pass.
 
 ---
 
 ## 9. Traceability
 
-| DESIGN.md section | PRD §14 requirements |
+| DESIGN.md section | REQUIREMENTS.md |
 |---|---|
-| §1 Mood | §14.1 principles, NFR-UI-01 |
-| §2 Colour palette | FR-M6-01…04, FR-M8-01…05, FR-M7-01/06, NFR-A11Y-01/02, NFR-UI-01/09, §14.6 #1 and #2 |
-| §3 Typography | FR-M4-13, FR-M9-01, NFR-UI-02, NFR-PERF-03 |
-| §4 Components | FR-APP-04…06, FR-M4-07/12/13, FR-M5-07/12/15–19, FR-M7-04, FR-M9-01, FR-M11-03/06–08, NFR-USE-08/12, NFR-A11Y-04/06/07/09, NFR-UI-05…08, §14.6 #3 |
-| §5 Microcopy | NFR-USE-02/09/10, NFR-UI-04 and the FR and DR items in the table |
-| §6 Wordmark | FR-APP-01, FR-APP-03 |
-| §8 Accessibility checks | NFR-A11Y-01…11, §14.5 |
+| §1 Mood | PRD §14.1 principles · NFR-UI-01, NFR-USE-04 |
+| §2 Colour palette | §6 types, §8 due dates · NFR-A11Y-01/02, NFR-UI-01, NFR-UI-09 |
+| §2.7 Dark theme, §2.8 Accent | §15 FR-APPR-02/05/06, NFR-APPR-01…03 |
+| §3 Typography | FR-M4-13, FR-M9-01, FR-APPR-01, NFR-UI-02, NFR-A11Y-15 |
+| §4.1 Layout | FR-M4-12/14/15, NFR-A11Y-12, NFR-ANC-01, FR-FLT-09 |
+| §4.3–§4.5 Cards and moves | §4, §7 · FR-M4-07, FR-M7-04, NFR-A11Y-13 |
+| §4.6–§4.12 Controls, modal, toasts, focus | §1, §5 · NFR-USE-12, NFR-A11Y-04/06/07 |
+| §4.13 Anchor Board | §12 |
+| §4.14 Header and footer | FR-APP-04, FR-KEY-03, §14 |
+| §4.16 Prompt history | §11 |
+| §4.17 Motion | FR-APPR-03, NFR-A11Y-09, NFR-UI-05 |
+| §4.18–§4.20 Settings, shortcuts, Help | §15, §16 |
+| §4.21–§4.25 Team, welcome, log-in, profile menu, activity | §2, §3, §13, FR-WELC-01 |
+| §5 Microcopy | NFR-UI-04, NFR-USE-09/10 and the IDs in each row |
+| §8 Accessibility checks | §19.2, §20 |
 
 ---
 
-*DESIGN.md version: Slopify v2 (client Q&A refinement) · based on hackathon-starter v1*
+*DESIGN.md version: Slopify v4 (client Q&A refinement, round 2) · based on hackathon-starter v1*

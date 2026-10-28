@@ -2,9 +2,12 @@ import { STORAGE_KEYS } from './constants.js';
 import { DEFAULT_ACCENT, ACCENT_PRESETS, isHexColor, resolveAccent, toTriplet } from './color.js';
 
 /**
- * Per-browser preferences (`vibetracker.prefs`, DR-STO table). They are never
- * exported: each person picks their own theme and text size. There is no
- * sign-in — Slopify always acts as the team lead (see src/lib/team.js).
+ * Per-browser preferences (`vibetracker.prefs`, REQUIREMENTS.md §21.4). They are never
+ * exported: each person picks their own theme and text size.
+ *
+ * Log-in has no password: `currentMemberId` is the profile chosen on the
+ * log-in screen, and `lastSeen` (member id → ISO time) drives the "handed to
+ * you since your last visit" notice.
  */
 
 export const THEMES = [
@@ -23,6 +26,8 @@ export const TEXT_SIZES = [
 export const REDUCE_OPTIONS = ['system', 'reduce'];
 
 export const DEFAULT_PREFS = {
+  currentMemberId: null,
+  lastSeen: {},
   theme: 'system',
   accent: DEFAULT_ACCENT,
   textSize: 'default',
@@ -43,6 +48,10 @@ export function normalisePrefs(raw) {
     ok: true,
     value: {
       ...raw,
+      currentMemberId: typeof raw.currentMemberId === 'string' && raw.currentMemberId ? raw.currentMemberId : null,
+      lastSeen: isObject(raw.lastSeen)
+        ? Object.fromEntries(Object.entries(raw.lastSeen).filter(([, v]) => typeof v === 'string' && !Number.isNaN(Date.parse(v))))
+        : {},
       theme: pick(raw.theme, THEMES.map((t) => t.id), DEFAULT_PREFS.theme),
       accent: accentOk ? raw.accent : DEFAULT_PREFS.accent,
       textSize: pick(raw.textSize, TEXT_SIZES.map((t) => t.id), DEFAULT_PREFS.textSize),

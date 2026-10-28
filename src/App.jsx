@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { getDueState, todayISO } from './lib/dates.js';
 import { createId, matchesFilters } from './lib/tasks.js';
 import { endSentence, findMember } from './lib/team.js';
+import { activity, editActivities, handedToSince, withActivity } from './lib/activity.js';
 import { nextContextUpdatedAt } from './lib/context.js';
 import { nextHistory } from './lib/history.js';
 import { focusRing, glassPanel } from './lib/ui.js';
 import { ToastProvider, useToast } from './components/Toast.jsx';
 import { AppDataProvider, useAppData } from './context/AppData.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import GlassBackdrop from './components/GlassBackdrop.jsx';
+import LoginScreen from './components/LoginScreen.jsx';
 import Board from './components/Board.jsx';
 import AnchorBoard from './components/AnchorBoard.jsx';
 import TaskModal from './components/TaskModal.jsx';
@@ -32,7 +35,8 @@ import DataTools from './components/DataTools.jsx';
  *   src/components/           Board, TaskCard, TaskModal, Modal, ConfirmDialog,
  *                             Toast, ErrorBoundary, …
  *
- * There is no sign-in: Slopify always acts as the team lead.
+ * Log-in has no password: one click on a profile (LoginScreen). Every change
+ * is recorded as that profile's activity (src/lib/activity.js).
  */
 
 // The starter exported these from App.jsx; keep the exports for compatibility.
@@ -44,18 +48,25 @@ export default function App({ readOnly = false }) {
     <ErrorBoundary>
       <ToastProvider>
         <AppDataProvider readOnly={readOnly}>
-          <Tracker />
+          <Gate />
         </AppDataProvider>
       </ToastProvider>
     </ErrorBoundary>
   );
 }
 
+/** The log-in screen until a profile is chosen, then the board. */
+function Gate() {
+  const { currentUser } = useAppData();
+  return currentUser ? <Tracker key={currentUser.id} /> : <LoginScreen />;
+}
+
 function Tracker() {
   const toast = useToast();
   const today = useToday();
 
-  const { tasks, setTasks, anchors, setAnchors, team, lead, readOnly } = useAppData();
+  const { tasks, setTasks, anchors, setAnchors, team, currentUser, loginNotice, clearLoginNotice, readOnly } = useAppData();
+  const me = currentUser.id;
   const setAnchorUrl = (id, url) =>
     setAnchors((list) => list.map((a) => (a.id === id ? { ...a, url } : a))); // writes `url` only
 
@@ -95,8 +106,36 @@ function Tracker() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [readOnly]);
 
+  // "Handed to you since your last visit" — once, right after log-in. The
+  // ref stops a second toast when React runs the effect twice (StrictMode).
+  const shownNotice = useRef(null);
+  useEffect(() => {
+    if (!loginNotice || loginNotice.id !== me || shownNotice.current === loginNotice) return;
+    shownNotice.current = loginNotice;
+    clearLoginNotice();
+    const handed = handedToSince(tasks, me, loginNotice.since);
+    const name = currentUser.name;
+    const welcome = endSentence(`Welcome, ${name}`);
+    if (handed.length > 0) {
+      const count = `${handed.length} ${handed.length === 1 ? 'task was' : 'tasks were'} handed to you`;
+      toast({
+        message: loginNotice.since ? `${count} since your last visit.` : `${welcome} ${count}.`,
+        duration: 8000,
+        action: { label: 'Show my tasks', onClick: () => setFilters({ ...NO_FILTERS, owner: me }) },
+      });
+    } else {
+      toast({ message: welcome });
+    }
+    // Run once per log-in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loginNotice]);
+
+  // Every change below writes the changed fields only (DR-LIFE-01) plus an
+  // activity entry by the logged-in profile.
   function moveTask(id, status) {
-    setTasks((list) => list.map((t) => (t.id === id ? { ...t, status } : t)));
+    setTasks((list) =>
+      list.map((t) => (t.id === id ? withActivity({ ...t, status }, activity('moved', me, { from: t.status, to: status })) : t)),
+    );
   }
 
   // Handoff toast with Undo (FR-M7-03, FR-M7-07). Undo only restores the old
@@ -109,7 +148,11 @@ function Tracker() {
         label: 'Undo',
         onClick: () =>
           setTasks((list) =>
-            list.map((t) => (t.id === id && t.assignee === to ? { ...t, assignee: from } : t)),
+            list.map((t) =>
+              t.id === id && t.assignee === to
+                ? withActivity({ ...t, assignee: from }, activity('handoff', me, { from: to, to: from }))
+                : t,
+            ),
           ),
       },
     });
@@ -119,7 +162,11 @@ function Tracker() {
   function handOff(id, assignee) {
     const task = tasks.find((t) => t.id === id);
     if (!task || task.assignee === assignee || !findMember(team, assignee)) return;
-    setTasks((list) => list.map((t) => (t.id === id ? { ...t, assignee } : t)));
+    setTasks((list) =>
+      list.map((t) =>
+        t.id === id ? withActivity({ ...t, assignee }, activity('handoff', me, { from: t.assignee, to: assignee })) : t,
+      ),
+    );
     announceHandOff(id, task.assignee, assignee);
   }
 
@@ -128,13 +175,18 @@ function Tracker() {
     if (editor.mode === 'create') {
       setTasks((list) => [
         ...list,
-        {
-          id: createId(),
-          ...fields,
-          createdDate: todayISO(),
-          contextUpdatedAt: nextContextUpdatedAt(null, fields),
-          contextHistory: [],
-        },
+        withActivity(
+          {
+            id: createId(),
+            ...fields,
+            createdDate: todayISO(),
+            contextUpdatedAt: nextContextUpdatedAt(null, fields),
+            contextHistory: [],
+            createdBy: me,
+            activity: [],
+          },
+          activity('created', me),
+        ),
       ]);
       // Do not hide the new task behind an active filter or search.
       if (!matchesFilters(fields, filters, team)) setFilters(NO_FILTERS);
@@ -142,12 +194,15 @@ function Tracker() {
       setTasks((list) =>
         list.map((t) =>
           t.id === editor.id
-            ? {
-                ...t,
-                ...fields,
-                contextUpdatedAt: nextContextUpdatedAt(t, fields),
-                contextHistory: nextHistory(t, fields), // M12: keep the old version
-              }
+            ? withActivity(
+                {
+                  ...t,
+                  ...fields,
+                  contextUpdatedAt: nextContextUpdatedAt(t, fields),
+                  contextHistory: nextHistory(t, fields), // M12: keep the old version
+                },
+                editActivities(t, fields, me),
+              )
             : t,
         ),
       );
@@ -183,7 +238,9 @@ function Tracker() {
         label: 'Undo',
         onClick: () =>
           setTasks((list) =>
-            list.some((t) => t.id === removed.id) ? list : [...list.slice(0, index), removed, ...list.slice(index)],
+            list.some((t) => t.id === removed.id)
+              ? list
+              : [...list.slice(0, index), withActivity(removed, activity('restored', me)), ...list.slice(index)],
           ),
       },
     });
@@ -279,7 +336,7 @@ function Tracker() {
           key={editor.mode === 'edit' ? editor.id : `new-${editor.status}`}
           mode={editor.mode}
           task={editingTask}
-          defaults={{ status: editor.status, assignee: lead?.id ?? null }}
+          defaults={{ status: editor.status, assignee: me }}
           today={today}
           onSave={saveTask}
           onDelete={deleteTask}
@@ -287,22 +344,6 @@ function Tracker() {
           returnFocus={returnFocus}
         />
       )}
-    </div>
-  );
-}
-
-/**
- * Soft, pale colour fields behind the glass (DESIGN.md §2.6) — iOS-style
- * wallpaper. Decorative only. The colours are pale so that text on the glass
- * keeps WCAG AA contrast wherever it sits.
- */
-function GlassBackdrop() {
-  return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      {/* Worst case on the thinnest glass (60 % white): text-muted 4.93:1. */}
-      <div className="absolute -left-32 -top-40 h-[38rem] w-[38rem] rounded-full bg-blob-1 opacity-85 blur-3xl" />
-      <div className="absolute -right-24 top-10 h-[34rem] w-[34rem] rounded-full bg-blob-2 opacity-85 blur-3xl" />
-      <div className="absolute -bottom-56 left-[30%] h-[36rem] w-[36rem] rounded-full bg-blob-3 opacity-80 blur-3xl" />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { buildDemoBoard } from './demo.js';
 import { getDueState } from '../lib/dates.js';
 import { normaliseTasks } from '../lib/tasks.js';
 import { normaliseTeam } from '../lib/team.js';
+import { handedToSince, normaliseActivity } from '../lib/activity.js';
 import { CONTEXT_TOOLS, ROLE_IDS, STAGE_IDS, TYPE_IDS } from '../lib/constants.js';
 
 const today = '2026-10-26';
@@ -33,5 +34,16 @@ describe('demo board (FR-M13-01, DR-SEED-03)', () => {
     expect(new Set(board.team.map((m) => m.role)).size).toBe(ROLE_IDS.length - 1); // all but "Other"
     expect(board.anchors.filter((a) => a.url)).toHaveLength(2);
     expect(board.team.some((m) => m.id === board.workspace.leadId)).toBe(true);
+  });
+
+  it('has a creator and a history on every task, and handoffs to show at log-in', () => {
+    const ids = new Set(board.team.map((m) => m.id));
+    for (const t of board.tasks) {
+      expect(ids.has(t.createdBy)).toBe(true);
+      expect(normaliseActivity(t.activity)).toEqual(t.activity);
+      expect(t.activity.at(-1).type).toBe('created');
+    }
+    const jo = board.team.find((m) => m.name === 'Jo M.');
+    expect(handedToSince(board.tasks, jo.id, null).length).toBe(2);
   });
 });

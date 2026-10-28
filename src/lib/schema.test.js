@@ -40,9 +40,16 @@ describe('migrateData v2 → v3', () => {
     expect(tasks[0]).toMatchObject({ context: '', contextTool: null, contextUpdatedAt: null, contextHistory: [] });
   });
 
-  it('leaves v3 data alone', () => {
+  it('adds the v4 attribution fields without touching owners', () => {
     const data = { tasks: [{ id: 'x', title: 'T', assignee: 'member-1' }], team: [{ id: 'member-1', name: 'A' }] };
-    expect(migrateData(data, 3)).toEqual(data);
+    expect(migrateData(data, 3).tasks[0]).toEqual({
+      id: 'x', title: 'T', assignee: 'member-1', createdBy: null, updatedBy: null, updatedAt: null, activity: [],
+    });
+  });
+
+  it('leaves v4 data alone', () => {
+    const data = { tasks: [{ id: 'x', title: 'T', assignee: 'member-1', activity: [] }], team: [{ id: 'member-1', name: 'A' }] };
+    expect(migrateData(data, 4)).toEqual(data);
   });
 });
 

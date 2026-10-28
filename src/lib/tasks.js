@@ -2,6 +2,7 @@ import { STAGE_IDS, TYPE_IDS, CONTEXT_TOOLS } from './constants.js';
 import { addDays, isISODate } from './dates.js';
 import { normaliseHistory } from './history.js';
 import { createId } from './ids.js';
+import { normaliseActivity } from './activity.js';
 
 export { createId };
 
@@ -20,6 +21,10 @@ export { createId };
  * @property {string|null} contextUpdatedAt M9, ISO timestamp
  * @property {Array<{context: string, contextTool: string|null, savedAt: string|null}>} contextHistory
  *           M12, earlier context versions, newest first (optional, default [])
+ * @property {string|null} createdBy        v4, member id of the creator
+ * @property {string|null} updatedBy        v4, member id of the last change
+ * @property {string|null} updatedAt        v4, ISO timestamp of the last change
+ * @property {Array} activity               v4, who did what, newest first (src/lib/activity.js)
  */
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -53,6 +58,11 @@ export function normaliseTask(raw, today) {
         ? raw.contextUpdatedAt
         : null,
     contextHistory: normaliseHistory(raw.contextHistory), // M12
+    // v4: attribution and activity
+    createdBy: typeof raw.createdBy === 'string' && raw.createdBy ? raw.createdBy : null,
+    updatedBy: typeof raw.updatedBy === 'string' && raw.updatedBy ? raw.updatedBy : null,
+    updatedAt: typeof raw.updatedAt === 'string' && !Number.isNaN(Date.parse(raw.updatedAt)) ? raw.updatedAt : null,
+    activity: normaliseActivity(raw.activity),
   };
 }
 
@@ -119,7 +129,17 @@ export function compareTasks(a, b) {
  */
 export function buildSeedTasks(today, memberIds = []) {
   const owner = (i) => (memberIds.length ? memberIds[i % memberIds.length] : null);
-  const base = { description: '', context: '', contextTool: null, contextUpdatedAt: null, contextHistory: [] };
+  const base = {
+    description: '',
+    context: '',
+    contextTool: null,
+    contextUpdatedAt: null,
+    contextHistory: [],
+    createdBy: null,
+    updatedBy: null,
+    updatedAt: null,
+    activity: [],
+  };
   return [
     {
       ...base,

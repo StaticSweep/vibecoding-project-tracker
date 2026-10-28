@@ -1,9 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { STORAGE_KEYS } from '../lib/constants.js';
 import { todayISO } from '../lib/dates.js';
 import { buildSeedTasks, normaliseTasks } from '../lib/tasks.js';
 import { DEFAULT_ANCHORS, normaliseAnchors } from '../lib/anchors.js';
-import { DEFAULT_WORKSPACE, buildDefaultTeam, normaliseTeam, normaliseWorkspace, teamLead } from '../lib/team.js';
+import { DEFAULT_WORKSPACE, buildDefaultTeam, findMember, normaliseTeam, normaliseWorkspace, teamLead } from '../lib/team.js';
 import { DEFAULT_PREFS, applyPrefsToDocument, normalisePrefs, onSystemThemeChange } from '../lib/prefs.js';
 import { STORAGE_WARN_BYTES, estimateStorageBytes } from '../lib/transfer.js';
 import { useLocalStorage } from '../hooks/useLocalStorage.js';
@@ -14,8 +14,10 @@ import { useToast } from '../components/Toast.jsx';
  *
  *   tasks, anchors, team, workspace — the board (exported and imported together)
  *   prefs                           — this browser's own settings (never exported)
- *   lead                            — the team lead. There is no sign-in:
- *                                     Slopify always acts as the lead.
+ *   currentUser                     — the logged-in profile, or null (log-in
+ *                                     screen). One click, no password.
+ *   login(id), logout()             — choose / leave a profile
+ *   lead                            — the team lead (a badge and role)
  *   readOnly                        — data from a newer Slopify (DR-MIG-04)
  *
  *   const { tasks, setTasks, team, lead } = useAppData();
@@ -134,6 +136,33 @@ export function AppDataProvider({ readOnly = false, children }) {
 
   const lead = teamLead(team, workspace);
 
+  // Log-in (no password). The profile is remembered in this browser, so a
+  // reload keeps you logged in. A removed profile logs you out.
+  const currentUser = findMember(team, prefs.currentMemberId);
+
+  // Set at log-in, read once by the board for the "handed to you" notice.
+  // `since` is the member's previous visit (null on a first visit).
+  const [loginNotice, setLoginNotice] = useState(null);
+
+  const login = useCallback(
+    (id) => {
+      setLoginNotice({ id, since: prefs.lastSeen?.[id] ?? null });
+      const now = new Date().toISOString();
+      setPrefs((p) => ({ ...p, currentMemberId: id, lastSeen: { ...p.lastSeen, [id]: now } }));
+    },
+    [prefs.lastSeen, setPrefs],
+  );
+
+  const logout = useCallback(() => {
+    const now = new Date().toISOString();
+    setLoginNotice(null);
+    setPrefs((p) =>
+      p.currentMemberId ? { ...p, currentMemberId: null, lastSeen: { ...p.lastSeen, [p.currentMemberId]: now } } : p,
+    );
+  }, [setPrefs]);
+
+  const clearLoginNotice = useCallback(() => setLoginNotice(null), []);
+
   const value = useMemo(
     () => ({
       tasks,
@@ -147,10 +176,18 @@ export function AppDataProvider({ readOnly = false, children }) {
       prefs,
       setPrefs,
       lead,
+      currentUser,
+      login,
+      logout,
+      loginNotice,
+      clearLoginNotice,
       readOnly,
       replaceBoard,
     }),
-    [tasks, setTasks, anchors, setAnchors, team, setTeam, workspace, setWorkspace, prefs, setPrefs, lead, readOnly, replaceBoard],
+    [
+      tasks, setTasks, anchors, setAnchors, team, setTeam, workspace, setWorkspace, prefs, setPrefs, lead,
+      currentUser, login, logout, loginNotice, clearLoginNotice, readOnly, replaceBoard,
+    ],
   );
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
